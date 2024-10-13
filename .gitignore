@@ -1,0 +1,28 @@
+# Compiled object files
+*.o
+*.obj
+
+# Executable files
+*.exe
+*.out
+*.elf
+
+# Build directories
+/build/
+/bin/
+/obj/
+
+# Temporary files
+*~
+*.tmp
+
+# ides  files
+.idea
+
+
+# qnx files
+.cproject
+.project
+
+
+
