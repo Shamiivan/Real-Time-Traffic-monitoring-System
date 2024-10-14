@@ -1,18 +1,15 @@
 #include <iostream>
 #include "plane.h"
 #include <vector>
+#include <chrono>
+#include <thread>
 
 int main() {
-	std::vector<Plane> planes;
-	planes.push_back(Plane("1", Vector{1, 2, 3}, Vector{4, 5, 6}));
-    planes.push_back(Plane("2", Vector{7, 8, 9}, Vector{10, 11, 12}));
-    planes.push_back(Plane("3", Vector{13, 14, 15}, Vector{16, 17, 18}));
-    planes.push_back(Plane("4", Vector{19, 20, 21}, Vector{22, 23, 24}));
-
-    for (auto plane : planes) {
-        std::cout << "Plane " << plane.get_id() << " is at position " <<
-          plane.get_pos().x << "\t" << plane.get_pos().y << "\t" << plane.get_pos().z << "\n";
-    }
-
+	Plane plane1("1", {0, 0, 0}, {1, 1, 1});
+    Plane plane2("2", {0, 0, 0}, {1, 1, 1});
+    // sleep for 5 seconds
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    printf("Plane 1: %f %f %f\n", plane1.get_pos().x, plane1.get_pos().y, plane1.get_pos().z);
+    printf("Plane 2: %f %f %f\n", plane2.get_pos().x, plane2.get_pos().y, plane2.get_pos().z);
 	return 0;
 }
