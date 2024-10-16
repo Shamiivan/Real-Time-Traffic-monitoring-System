@@ -3,7 +3,7 @@
 
 #include <string>
 #include <atomic>
-#include <pthread.h>
+#include <mutex>
 #include <time.h>
 #include <sys/netmgr.h>
 #include <sys/neutrino.h>
@@ -32,36 +32,29 @@ public:
     void set_velocity(Vector speed);
     void set_pos(Vector position);
 
-    Vector update_position();
+    Vector& update_position();
 
     void start();
     void stop();
-    void run();
 
 private:
+    static void* thread_func(void* arg);
+    void run();
+
     std::string id;
     Vector position;
     Vector velocity;
 
     std::atomic<bool> running;
-    static constexpr float dt = 1.0f;
-    pthread_t m_thread;
-    timer_t timer_id;
+    mutable std::mutex mtx;
+    static constexpr int dt = 1;
 
     int chid;
-    int coid;
-    struct sigevent event;
-    struct itimerspec itime;
-    timer_msg msg;
-    struct sched_param sch_params;
-    int priority;
+    int thread_id;
+    timer_t timer_id;
+    struct sigevent event; // event to deliver the timer
+    struct itimerspec itime; // the timer specification
     static constexpr int DEFAULT_PRIORITY = 10;
-
-    static void* thread_callback(void* arg) {
-        Plane* plane = static_cast<Plane*>(arg);
-        plane->run();
-        return nullptr;
-    }
 };
 
 #endif // PLANE_H
