@@ -17,11 +17,22 @@ int main() {
     for (auto& plane : planes) {
 		plane->start();
 	}
-    std::this_thread::sleep_for(std::chrono::seconds(5));
     // sleep for 5 seconds
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     for (auto& plane : planes) {
+      if(plane->get_id() == "1"){
+        plane->stop();
+	  }
       printf("Plane %s: (%f, %f, %f)\n", plane->get_id().c_str(), plane->get_pos().x, plane->get_pos().y, plane->get_pos().z);
-  }
+  	}
+
+
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
+	for (auto& plane : planes) {
+      printf("Plane %s: (%f, %f, %f)\n", plane->get_id().c_str(), plane->get_pos().x, plane->get_pos().y, plane->get_pos().z);
+  	}
+
 	for (auto& plane : planes) {
 		plane->stop();
 	}
