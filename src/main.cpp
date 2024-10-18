@@ -1,42 +1,145 @@
 #include <iostream>
-#include "plane.h"
-#include <vector>
-#include <chrono>
+#include <cstring>
 #include <pthread.h>
+#include <unistd.h>
 #include <sys/neutrino.h>
-#include <thread>
-#include <memory>
+
+#define MAX_TEXT_LEN 30
+#define TEXT_MSG_TYPE 0
+
+struct Message {
+    uint16_t type;
+    char text[MAX_TEXT_LEN];
+};
+
+struct Reply {
+    int crc;
+};
+
+class CrcCalculator {
+public:
+    static int calculate(const char* text) {
+        int crc = 0;
+        while (*text) {
+            crc += *text++;
+        }
+        return crc;
+    }
+};
+
+class Server {
+private:
+    int chid;
+
+public:
+    Server() : chid(-1) {}
+
+    bool initialize() {
+        chid = ChannelCreate(0);
+        if (chid == -1) {
+            std::cerr << "Server: ChannelCreate failed: " << strerror(errno) << std::endl;
+            return false;
+        }
+        return true;
+    }
+
+    void run() {
+        Message msg;
+        Reply reply;
+
+        while (true) {
+            int rcvid = MsgReceive(chid, &msg, sizeof(msg), nullptr);
+            if (rcvid == -1) {
+                std::cerr << "Server: MsgReceive failed: " << strerror(errno) << std::endl;
+                continue;
+            }
+
+            if (msg.type == TEXT_MSG_TYPE) {
+                std::cout << "Server: Received message: '" << msg.text << "'" << std::endl;
+                reply.crc = CrcCalculator::calculate(msg.text);
+                MsgReply(rcvid, EOK, &reply, sizeof(reply));
+            } else {
+                std::cout << "Server: Got unknown message type " << msg.type << std::endl;
+                MsgError(rcvid, ENOSYS);
+            }
+        }
+    }
+
+    int getChannelId() const { return chid; }
+
+    ~Server() {
+        if (chid != -1) {
+            ChannelDestroy(chid);
+        }
+    }
+};
+
+class Client {
+private:
+    int coid;
+
+public:
+    Client() : coid(-1) {}
+
+    bool connect(int chid) {
+        coid = ConnectAttach(0, 0, chid, _NTO_SIDE_CHANNEL, 0);
+        if (coid == -1) {
+            std::cerr << "Client: ConnectAttach failed: " << strerror(errno) << std::endl;
+            return false;
+        }
+        return true;
+    }
+
+    void run() {
+        Message msg;
+        Reply reply;
+
+        while (true) {
+            std::cout << "Client: Enter a message (or 'q' to quit): ";
+            std::cin.getline(msg.text, MAX_TEXT_LEN);
+
+            if (strcmp(msg.text, "q") == 0) break;
+
+            msg.type = TEXT_MSG_TYPE;
+
+            int ret = MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply));
+            if (ret == -1) {
+                std::cerr << "Client: MsgSend failed: " << strerror(errno) << std::endl;
+            } else {
+                std::cout << "Client: Got reply, CRC = " << reply.crc << std::endl;
+            }
+        }
+    }
+
+    ~Client() {
+        if (coid != -1) {
+            ConnectDetach(coid);
+        }
+    }
+};
+
+void* clientThread(void* arg) {
+    int chid = *static_cast<int*>(arg);
+    Client client;
+    if (client.connect(chid)) {
+        client.run();
+    }
+    return nullptr;
+}
 
 int main() {
-    std::vector<std::unique_ptr<Plane>> planes;
-    planes.emplace_back(std::make_unique<Plane>("1", Vector{0, 0, 0}, Vector{1, 1, 1}));
-    planes.emplace_back(std::make_unique<Plane>("2", Vector{0, 0, 0}, Vector{30, 20, 10}));
-	planes.emplace_back(std::make_unique<Plane>("3", Vector{0, 0, 0}, Vector{5, 5, 5}));
+    Server server;
+    if (!server.initialize()) {
+        return 1;
+    }
 
+    pthread_t clientThreadId;
+    int chid = server.getChannelId();
+    pthread_create(&clientThreadId, nullptr, clientThread, &chid);
 
-    for (auto& plane : planes) {
-		plane->start();
-	}
-    // sleep for 5 seconds
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    for (auto& plane : planes) {
-      if(plane->get_id() == "1"){
-        plane->stop();
-	  }
-      printf("Plane %s: (%f, %f, %f)\n", plane->get_id().c_str(), plane->get_pos().x, plane->get_pos().y, plane->get_pos().z);
-  	}
+    server.run();
 
+    pthread_join(clientThreadId, nullptr);
 
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-
-	for (auto& plane : planes) {
-      printf("Plane %s: (%f, %f, %f)\n", plane->get_id().c_str(), plane->get_pos().x, plane->get_pos().y, plane->get_pos().z);
-  	}
-
-	for (auto& plane : planes) {
-		plane->stop();
-	}
-
-
-	return 0;
+    return 0;
 }
