@@ -1,18 +1,31 @@
 #include <iostream>
 #include "plane.h"
 #include <vector>
+#include <chrono>
+#include <pthread.h>
+#include <sys/neutrino.h>
+#include <thread>
+#include <memory>
 
 int main() {
-	std::vector<Plane> planes;
-	planes.push_back(Plane("1", Vector{1, 2, 3}, Vector{4, 5, 6}));
-    planes.push_back(Plane("2", Vector{7, 8, 9}, Vector{10, 11, 12}));
-    planes.push_back(Plane("3", Vector{13, 14, 15}, Vector{16, 17, 18}));
-    planes.push_back(Plane("4", Vector{19, 20, 21}, Vector{22, 23, 24}));
+    std::vector<std::unique_ptr<Plane>> planes;
+    planes.emplace_back(std::make_unique<Plane>("1", Vector{0, 0, 0}, Vector{1, 1, 1}));
+    planes.emplace_back(std::make_unique<Plane>("2", Vector{0, 0, 0}, Vector{30, 20, 10}));
+	planes.emplace_back(std::make_unique<Plane>("3", Vector{0, 0, 0}, Vector{5, 5, 5}));
 
-    for (auto plane : planes) {
-        std::cout << "Plane " << plane.get_id() << " is at position " <<
-          plane.get_pos().x << "\t" << plane.get_pos().y << "\t" << plane.get_pos().z << "\n";
-    }
+
+    for (auto& plane : planes) {
+		plane->start();
+	}
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    // sleep for 5 seconds
+    for (auto& plane : planes) {
+      printf("Plane %s: (%f, %f, %f)\n", plane->get_id().c_str(), plane->get_pos().x, plane->get_pos().y, plane->get_pos().z);
+  }
+	for (auto& plane : planes) {
+		plane->stop();
+	}
+
 
 	return 0;
 }
