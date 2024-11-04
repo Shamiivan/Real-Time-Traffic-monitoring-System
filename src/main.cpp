@@ -54,18 +54,18 @@ void read_planes(std::vector<std::unique_ptr<Plane>>& planes) {
 	std::string line;
 	    while (std::getline(plane_file, line, ';'))
 	    {  // Split each line by semicolons
-	    	std::vector<std::string> row;
-	    	        std::stringstream ss(line);
-	    	        std::string value;
+	    		std::vector<std::string> row;
+	    		std::stringstream ss(line);
+	    		std::string value;
 
 	    	        // Split each entry in the line by commas
 	    	        while (std::getline(ss, value, ',')) {
 	    	            row.push_back(value);
-	    	            ID = row[0];
-	    	            Position = {std::stof(row[1]), std::stof(row[2]), std::stof(row[3])};
-	    	            Velocity = {std::stof(row[4]), std::stof(row[5]), std::stof(row[6])};
-	    	            planes.emplace_back(std::make_unique<Plane>(ID, Position, Velocity));
 	    	        }
+	    	        ID = row[0];
+	    	        Position = {std::stof(row[1]), std::stof(row[2]), std::stof(row[3])};
+	    	        Velocity = {std::stof(row[4]), std::stof(row[5]), std::stof(row[6])};
+	    	        planes.emplace_back(std::make_unique<Plane>(ID, Position, Velocity));
 	    }
 
 	    plane_file.close();
