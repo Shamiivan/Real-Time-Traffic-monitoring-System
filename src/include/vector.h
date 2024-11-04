@@ -4,4 +4,5 @@
 struct Vector {
     float x, y, z;
 };
+
 #endif //VECTOR_H

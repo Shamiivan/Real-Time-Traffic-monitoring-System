@@ -8,12 +8,9 @@
 #include <sys/netmgr.h>
 #include <sys/neutrino.h>
 #include <iostream>
+#include "vector.h"
 
 #define MY_PULSE_CODE _PULSE_CODE_MINAVAIL
-
-struct Vector {
-    float x, y, z;
-};
 
 union timer_msg {
     struct _pulse pulse;

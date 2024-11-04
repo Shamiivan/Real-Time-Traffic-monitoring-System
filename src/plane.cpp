@@ -6,11 +6,12 @@
 #include <iostream>
 #include <pthread.h>
 
+
 Plane::Plane(){
 
 }
 Plane::Plane(std::string _id, Vector position, Vector speed)
-    : id(_id), position(position), velocity(speed), running(false), thread_id(0) {
+    : id(_id), position(position), velocity(speed), running(false), thread_id(-1) {
     // Set up timer
         chid = ChannelCreate(0);
         if (chid == -1) {
@@ -61,7 +62,7 @@ void Plane::start() {
 
 void Plane::stop() {
     running = false;
-    if (thread_id != 0) {
+        if (thread_id != 0) {
         ThreadJoin(thread_id, NULL);
         ThreadDestroy(thread_id, 0, NULL);
         thread_id = 0;
