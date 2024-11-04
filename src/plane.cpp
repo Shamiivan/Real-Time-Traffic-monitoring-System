@@ -5,7 +5,10 @@
 #include <sys/neutrino.h>
 #include <iostream>
 #include <pthread.h>
-
+#include <fstream>
+#include <string>
+#include <vector>
+#include <sstream>
 Plane::Plane(){
 
 }
@@ -118,3 +121,4 @@ Vector& Plane::update_position() {
     position.z += velocity.z * dt;
     return position;
 }
+

@@ -31,6 +31,7 @@ public:
 
     void set_velocity(Vector speed);
     void set_pos(Vector position);
+    //void read_planes(std::vector<std::unique_ptr<Plane>> planes);
 
     Vector& update_position();
 
