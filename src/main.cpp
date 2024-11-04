@@ -1,145 +1,177 @@
-#include <iostream>
-#include <cstring>
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/neutrino.h>
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 
-#define MAX_TEXT_LEN 30
-#define TEXT_MSG_TYPE 0
+// Configuration constants
+#define MAX_MESSAGE_LENGTH 30
+#define DEFAULT_MESSAGE_TYPE 0
 
-struct Message {
+// Clear message structures
+typedef struct {
     uint16_t type;
-    char text[MAX_TEXT_LEN];
-};
+    char content[MAX_MESSAGE_LENGTH];
+} Message;
 
-struct Reply {
-    int crc;
-};
+typedef struct {
+    int checksum;
+} Response;
 
-class CrcCalculator {
-public:
-    static int calculate(const char* text) {
-        int crc = 0;
-        while (*text) {
-            crc += *text++;
-        }
-        return crc;
+// Global variables (could be wrapped in a context struct)
+static int server_channel_id;
+static const char* input_device = NULL;
+static const char* program_name = "message_handler";
+
+// Function prototypes
+int initialize_server(void);
+void* handle_client(void* arg);
+int calculate_checksum(const char* text);
+int read_input(int fd, char* buffer, size_t max_length);
+void handle_error(const char* message);
+
+// Server implementation
+int main(int argc, char** argv) {
+    // Setup buffering for stdout
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
+    // Parse command line arguments
+    if (argc == 2) {
+        input_device = argv[1];
+    } else if (argc > 2) {
+        printf("Usage: %s [device_path]\nExample: %s /dev/ttyp2\n",
+               program_name, program_name);
+        exit(EXIT_FAILURE);
     }
-};
 
-class Server {
-private:
-    int chid;
-
-public:
-    Server() : chid(-1) {}
-
-    bool initialize() {
-        chid = ChannelCreate(0);
-        if (chid == -1) {
-            std::cerr << "Server: ChannelCreate failed: " << strerror(errno) << std::endl;
-            return false;
-        }
-        return true;
+    // Initialize server
+    if (initialize_server() != 0) {
+        handle_error("Failed to initialize server");
     }
 
-    void run() {
-        Message msg;
-        Reply reply;
+    // Create client thread
+    pthread_t client_thread;
+    if (pthread_create(&client_thread, NULL, handle_client, NULL) != 0) {
+        handle_error("Failed to create client thread");
+    }
 
-        while (true) {
-            int rcvid = MsgReceive(chid, &msg, sizeof(msg), nullptr);
-            if (rcvid == -1) {
-                std::cerr << "Server: MsgReceive failed: " << strerror(errno) << std::endl;
-                continue;
+    // Main server loop
+    while (1) {
+        Message received_msg;
+        Response response;
+        int client_id;
+
+        // Wait for incoming messages
+        client_id = MsgReceive(server_channel_id, &received_msg,
+                             sizeof(received_msg), NULL);
+        if (client_id == -1) {
+            printf("Error receiving message: %s\n", strerror(errno));
+            continue;
+        }
+
+        // Process message
+        if (received_msg.type == DEFAULT_MESSAGE_TYPE) {
+            printf("%s: Server received: '%s'\n",
+                   program_name, received_msg.content);
+
+            // Calculate response
+            response.checksum = calculate_checksum(received_msg.content);
+
+            // Send response
+            if (MsgReply(client_id, 0, &response, sizeof(response)) == -1) {
+                printf("Error sending reply: %s\n", strerror(errno));
             }
-
-            if (msg.type == TEXT_MSG_TYPE) {
-                std::cout << "Server: Received message: '" << msg.text << "'" << std::endl;
-                reply.crc = CrcCalculator::calculate(msg.text);
-                MsgReply(rcvid, EOK, &reply, sizeof(reply));
-            } else {
-                std::cout << "Server: Got unknown message type " << msg.type << std::endl;
-                MsgError(rcvid, ENOSYS);
-            }
+        } else {
+            printf("%s: Unknown message type: %d\n",
+                   program_name, received_msg.type);
+            MsgError(client_id, ENOSYS);
         }
     }
-
-    int getChannelId() const { return chid; }
-
-    ~Server() {
-        if (chid != -1) {
-            ChannelDestroy(chid);
-        }
-    }
-};
-
-class Client {
-private:
-    int coid;
-
-public:
-    Client() : coid(-1) {}
-
-    bool connect(int chid) {
-        coid = ConnectAttach(0, 0, chid, _NTO_SIDE_CHANNEL, 0);
-        if (coid == -1) {
-            std::cerr << "Client: ConnectAttach failed: " << strerror(errno) << std::endl;
-            return false;
-        }
-        return true;
-    }
-
-    void run() {
-        Message msg;
-        Reply reply;
-
-        while (true) {
-            std::cout << "Client: Enter a message (or 'q' to quit): ";
-            std::cin.getline(msg.text, MAX_TEXT_LEN);
-
-            if (strcmp(msg.text, "q") == 0) break;
-
-            msg.type = TEXT_MSG_TYPE;
-
-            int ret = MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply));
-            if (ret == -1) {
-                std::cerr << "Client: MsgSend failed: " << strerror(errno) << std::endl;
-            } else {
-                std::cout << "Client: Got reply, CRC = " << reply.crc << std::endl;
-            }
-        }
-    }
-
-    ~Client() {
-        if (coid != -1) {
-            ConnectDetach(coid);
-        }
-    }
-};
-
-void* clientThread(void* arg) {
-    int chid = *static_cast<int*>(arg);
-    Client client;
-    if (client.connect(chid)) {
-        client.run();
-    }
-    return nullptr;
-}
-
-int main() {
-    Server server;
-    if (!server.initialize()) {
-        return 1;
-    }
-
-    pthread_t clientThreadId;
-    int chid = server.getChannelId();
-    pthread_create(&clientThreadId, nullptr, clientThread, &chid);
-
-    server.run();
-
-    pthread_join(clientThreadId, nullptr);
 
     return 0;
+}
+
+// Client implementation
+void* handle_client(void* arg) {
+    Message msg;
+    Response response;
+    int connection_id, input_fd;
+
+    // Connect to server channel
+    connection_id = ConnectAttach(0, 0, server_channel_id,
+                                _NTO_SIDE_CHANNEL, 0);
+    if (connection_id == -1) {
+        handle_error("Failed to connect to server");
+    }
+
+    // Open input device or use stdin
+    input_fd = input_device ?
+               open(input_device, O_RDONLY) :
+               STDIN_FILENO;
+
+    if (input_fd == -1) {
+        handle_error("Failed to open input device");
+    }
+
+    // Client message loop
+    while (1) {
+        printf("%s: Reading from %s\n", program_name,
+               input_device ? input_device : "stdin");
+
+        // Read input
+        int bytes_read = read_input(input_fd, msg.content,
+                                  MAX_MESSAGE_LENGTH - 1);
+        if (bytes_read == -1) {
+            break;
+        }
+
+        // Prepare and send message
+        msg.type = DEFAULT_MESSAGE_TYPE;
+        msg.content[bytes_read] = '\0';
+
+        printf("%s: Client sending: '%s'\n", program_name, msg.content);
+
+        if (MsgSend(connection_id, &msg, sizeof(msg),
+                    &response, sizeof(response)) == -1) {
+            printf("Error in MsgSend: %s\n", strerror(errno));
+            continue;
+        }
+
+        printf("%s: Client received checksum: %d\n",
+               program_name, response.checksum);
+    }
+
+    close(input_fd);
+    return NULL;
+}
+
+// Utility functions
+int initialize_server(void) {
+    server_channel_id = ChannelCreate(0);
+    return (server_channel_id == -1) ? -1 : 0;
+}
+
+int calculate_checksum(const char* text) {
+    int sum = 0;
+    while (*text != '\0') {
+        sum += *text++;
+    }
+    return sum;
+}
+
+int read_input(int fd, char* buffer, size_t max_length) {
+    int bytes_read = read(fd, buffer, max_length);
+    if (bytes_read == -1) {
+        printf("%s: Read error: %s\n", program_name, strerror(errno));
+    }
+    return bytes_read;
+}
+
+void handle_error(const char* message) {
+    printf("%s: %s: %s\n", program_name, message, strerror(errno));
+    exit(EXIT_FAILURE);
 }
