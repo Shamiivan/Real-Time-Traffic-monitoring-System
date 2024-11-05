@@ -8,7 +8,6 @@
 
 
 Plane::Plane(){
-
 }
 Plane::Plane(std::string _id, Vector position, Vector speed)
     : id(_id), position(position), velocity(speed){}
