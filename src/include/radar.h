@@ -9,6 +9,7 @@
 #include <sys/neutrino.h>
 #include <string>
 #include "plane.h"
+#include "timer.h"
 
 using std::string;
 using std::pair;
@@ -24,14 +25,6 @@ using std::to_string;
 using std::make_unique;
 using std::find_if;
 
-struct timer_cfg {
-    int chid;
-    timer_t id;
-    struct sigevent event;
-    struct itimerspec itime;
-    int priority{10};
-};
-
 class Radar {
   public:
     Radar();
@@ -43,8 +36,7 @@ class Radar {
     void start();
     void stop();
   private:
-    string program_name; // acts as a logging tag
-    static constexpr int POLLING_INTERVAL_MS = 1000;
+    int interval;
     vector<unique_ptr<Plane>> planes; // planes in the radar
 
     // thread management
@@ -53,9 +45,9 @@ class Radar {
     static void* polling_worker(void* arg);
     mutable mutex mtx;
     void run();
+    void update_planes();
 
-
-    // timer
-    timer_cfg timer;
+    unique_ptr<Timer> timer;
+    const int POLLING_INTERVAL= 1;
 };
 #endif //RADAR_H

@@ -15,6 +15,7 @@ int main() {
 	   	char cmd;
 		Radar radar;
 		radar.add_plane("AC123", {1,30000,1}, {500,100,1000});
+		radar.add_plane("AC125", {1,30000,1}, {500,500,5000});
 		radar.start();
 		while(true) {
 		        cmd = getchar();
@@ -23,7 +24,6 @@ int main() {
 		        }
 		    }
 	    radar.stop();
-
 //    std::vector<std::unique_ptr<Plane>> planes;
 //    planes.emplace_back(std::make_unique<Plane>("1", Vector{0, 0, 0}, Vector{1, 1, 1}));
 //    planes.emplace_back(std::make_unique<Plane>("2", Vector{0, 0, 0}, Vector{30, 20, 10}));
