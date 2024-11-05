@@ -8,16 +8,7 @@
 #include <sys/netmgr.h>
 #include <sys/neutrino.h>
 #include <iostream>
-
-#define MY_PULSE_CODE _PULSE_CODE_MINAVAIL
-
-struct Vector {
-    float x, y, z;
-};
-
-union timer_msg {
-    struct _pulse pulse;
-};
+#include "vector.h"
 
 class Plane {
 public:
@@ -32,7 +23,7 @@ public:
     void set_velocity(Vector speed);
     void set_pos(Vector position);
 
-    Vector& update_position();
+    Vector update_position();
 
     void start();
     void stop();
@@ -45,16 +36,8 @@ private:
     Vector position;
     Vector velocity;
 
-    std::atomic<bool> running;
     mutable std::mutex mtx;
     static constexpr int dt = 1;
-
-    int chid;
-    int thread_id;
-    timer_t timer_id;
-    struct sigevent event; // event to deliver the timer
-    struct itimerspec itime; // the timer specification
-    static constexpr int DEFAULT_PRIORITY = 10;
 };
 
 #endif // PLANE_H
