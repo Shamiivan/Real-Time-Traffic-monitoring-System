@@ -1,18 +1,39 @@
+// plane.cpp
 #include "plane.h"
+#include "messages.h"
 #include <cstdio>
 #include <cstdlib>
 #include <sys/netmgr.h>
 #include <sys/neutrino.h>
 #include <iostream>
-#include <pthread.h>
+#include <unistd.h>
+#include <cstring>
 
-
-Plane::Plane(){
+Plane::Plane() : running_(false), dt(1.0) {
+    pthread_mutex_init(&mutex_, nullptr);
+    chid_ = ChannelCreate(0);
+    if (chid_ == -1) {
+        perror("Plane: Failed to create channel");
+        exit(EXIT_FAILURE);
+    }
 }
-Plane::Plane(std::string _id, Vector position, Vector speed)
-    : id(_id), position(position), velocity(speed){}
+
+Plane::Plane(
+    std::string _id,
+    Vector position,
+    Vector speed) : id(_id), position(position), velocity(speed), running_(false), dt(1.0)
+{
+    pthread_mutex_init(&mutex_, nullptr);
+    chid_ = ChannelCreate(0);
+    if (chid_ == -1) {
+        perror("Plane: Failed to create channel");
+        exit(EXIT_FAILURE);
+    }
+}
 
 Plane::~Plane() {
+    stop();
+    pthread_mutex_destroy(&mutex_);
 }
 
 Vector Plane::get_pos() const {
@@ -44,5 +65,87 @@ Vector Plane::update_position() {
     position.x += velocity.x * dt;
     position.y += velocity.y * dt;
     position.z += velocity.z * dt;
+    std::cout << "Plane " << id << " updated position to (" << position.x << ", "
+              << position.y << ", " << position.z << ")\n";
     return position;
+}
+
+void Plane::start() {
+    running_ = true;
+    int ret = pthread_create(&thread_, nullptr, Plane::threadFunc, this);
+    if (ret != 0) {
+        perror("Plane: Failed to create position thread");
+        exit(EXIT_FAILURE);
+    } else {
+        std::cout << "Plane " << id << " position thread started.\n";
+    }
+
+    // Start the message handling thread
+    ret = pthread_create(&msg_thread_, nullptr, Plane::msgThreadFunc, this);
+    if (ret != 0) {
+        perror("Plane: Failed to create message thread");
+        exit(EXIT_FAILURE);
+    } else {
+        std::cout << "Plane " << id << " message thread started.\n";
+    }
+}
+
+void Plane::stop() {
+    if (running_) {
+        running_ = false;
+        pthread_join(thread_, nullptr);
+        pthread_join(msg_thread_, nullptr);
+        ChannelDestroy(chid_);
+    }
+}
+
+void* Plane::threadFunc(void* arg) {
+    Plane* self = static_cast<Plane*>(arg);
+    while (self->running_) {
+        self->update_position();
+        sleep(1);
+    }
+    return nullptr;
+}
+
+void* Plane::msgThreadFunc(void* arg) {
+    Plane* self = static_cast<Plane*>(arg);
+    self->messageLoop();
+    return nullptr;
+}
+
+void Plane::messageLoop() {
+    int rcvid;
+    RadarQueryMsg queryMsg;
+
+    while (running_) {
+        rcvid = MsgReceive(chid_, &queryMsg, sizeof(queryMsg), NULL);
+
+        if (rcvid == -1) {
+            if (errno == EINTR) {
+                continue;
+            } else {
+                perror("Plane: MsgReceive failed");
+                break;
+            }
+        } else if (rcvid > 0) {
+            PlaneResponseMsg responseMsg;
+            pthread_mutex_lock(&mutex_);
+            strncpy(responseMsg.data.id, id.c_str(), sizeof(responseMsg.data.id));
+            responseMsg.data.id[sizeof(responseMsg.data.id) - 1] = '\0';
+            responseMsg.data.x = position.x;
+            responseMsg.data.y = position.y;
+            responseMsg.data.z = position.z;
+            responseMsg.data.speedX = velocity.x;
+            responseMsg.data.speedY = velocity.y;
+            responseMsg.data.speedZ = velocity.z;
+            pthread_mutex_unlock(&mutex_);
+
+            MsgReply(rcvid, EOK, &responseMsg, sizeof(responseMsg));
+        }
+    }
+}
+
+int Plane::getChannelId() const {
+    return chid_;
 }

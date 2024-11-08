@@ -33,7 +33,9 @@ CCFLAGS_all += $(CCFLAGS_$(BUILD_PROFILE))
 # CCFLAGS_all += -fPIC
 LDFLAGS_all += $(LDFLAGS_$(BUILD_PROFILE))
 LIBS_all += $(LIBS_$(BUILD_PROFILE))
-DEPS = -Wp,-MMD,$(@:%.o=%.d),-MT,$@
+
+# Updated DEPS variable
+DEPS = -MMD -MP -MF $(@:%.o=%.d)
 
 # Macro to expand files recursively: parameters $1 - directory, $2 - extension, i.e., cpp
 rwildcard = $(wildcard $(addprefix $1/*.,$2)) $(foreach d,$(wildcard $1/*),$(call rwildcard,$d,$2))
@@ -47,11 +49,11 @@ OBJS = $(addprefix $(OUTPUT_DIR)/,$(addsuffix .o, $(basename $(SRCS))))
 # Compiling rules
 $(OUTPUT_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) -c $(DEPS) -o $@ $(INCLUDES) $(CCFLAGS_all) $(CCFLAGS) $<
+	$(CC) $(DEPS) -c -o $@ $(INCLUDES) $(CCFLAGS_all) $(CCFLAGS) $<
 
 $(OUTPUT_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -c $(DEPS) -o $@ $(INCLUDES) $(CCFLAGS_all) $(CCFLAGS) $<
+	$(CXX) $(DEPS) -c -o $@ $(INCLUDES) $(CCFLAGS_all) $(CCFLAGS) $<
 
 # Linking rule
 $(TARGET): $(OBJS)

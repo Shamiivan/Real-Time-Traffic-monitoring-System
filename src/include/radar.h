@@ -1,53 +1,44 @@
+// radar.h
 #ifndef RADAR_H
 #define RADAR_H
 
-#include <memory>
 #include <vector>
-#include <map>
-#include <mutex>
-#include <sys/netmgr.h>
-#include <sys/neutrino.h>
 #include <string>
+#include <mutex>
+#include <pthread.h>
 #include "plane.h"
-#include "timer.h"
-
-using std::string;
-using std::pair;
-using std::map;
-using std::shared_ptr;
-using std::vector;
-using std::mutex;
-using std::unique_ptr;
-using std::lock_guard;
-using std::atomic;
-using std::move;
-using std::to_string;
-using std::make_unique;
-using std::find_if;
+#include "messages.h"
 
 class Radar {
-  public:
-    Radar();
+public:
+    Radar(int computerSystemCoid);
     ~Radar();
-
-    // plane management
-    int add_plane(string id, Vector position, Vector speed);
 
     void start();
     void stop();
-  private:
-    int interval;
-    vector<unique_ptr<Plane>> planes; // planes in the radar
 
-    // thread management
-    atomic<bool> running;
-    int thread_id;
-    static void* polling_worker(void* arg);
-    mutable mutex mtx;
+    int add_plane(std::string id, Vector position, Vector speed);
+
+private:
+    static void* threadFunc(void* arg);
     void run();
+
     void update_planes();
 
-    unique_ptr<Timer> timer;
-    const int POLLING_INTERVAL= 1;
+    struct PlaneConnection {
+        Plane* plane;
+        int coid; // Connection ID to the Plane's channel
+    };
+
+    bool query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseMsg);
+
+    std::vector<Plane*> planes_;
+    std::vector<PlaneConnection> planeConnections_;
+    pthread_t thread_;
+    bool running_;
+    std::mutex mtx;
+
+    int computerSystemCoid_;
 };
-#endif //RADAR_H
+
+#endif // RADAR_H

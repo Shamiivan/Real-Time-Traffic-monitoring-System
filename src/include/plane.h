@@ -1,13 +1,11 @@
+// plane.h
 #ifndef PLANE_H
 #define PLANE_H
 
 #include <string>
-#include <atomic>
 #include <mutex>
-#include <time.h>
-#include <sys/netmgr.h>
+#include <pthread.h>
 #include <sys/neutrino.h>
-#include <iostream>
 #include "vector.h"
 
 class Plane {
@@ -15,6 +13,9 @@ public:
     Plane();
     Plane(std::string _id, Vector position, Vector speed);
     ~Plane();
+
+    void start();
+    void stop();
 
     Vector get_pos() const;
     Vector get_speed() const;
@@ -25,19 +26,30 @@ public:
 
     Vector update_position();
 
-    void start();
-    void stop();
+    int getChannelId() const;
 
 private:
-    static void* thread_func(void* arg);
-    void run();
+    static void* threadFunc(void* arg);
+    static void* msgThreadFunc(void* arg);
+    void messageLoop();
 
     std::string id;
     Vector position;
     Vector velocity;
 
+    pthread_t thread_;       // Position update thread
+    pthread_t msg_thread_;   // Message handling thread
+    bool running_;
     mutable std::mutex mtx;
-    static constexpr int dt = 1;
+
+    // IPC variables
+    int chid_; // Channel ID for receiving messages
+
+    // Time step for position updates
+    double dt;
+
+    // Synchronization for IPC
+    pthread_mutex_t mutex_;
 };
 
 #endif // PLANE_H
