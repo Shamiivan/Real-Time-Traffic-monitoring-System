@@ -1,5 +1,5 @@
 // computersystem.cpp
-#include "computersystem.h"
+#include "ComputerSystem.h"
 #include "messages.h"
 #include <sys/neutrino.h>
 #include <unistd.h>
