@@ -20,5 +20,7 @@
 .idea
 
 
+# Core dumps (used for debugging)
+*.core
 
 
