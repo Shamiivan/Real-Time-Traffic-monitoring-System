@@ -6,7 +6,7 @@
 #include <sys/netmgr.h>
 #include "plane.h"
 #include "radar.h"
-#include "computersystem.h"
+#include "ComputerSystem.h"
 #include "vector.h"
 #include "messages.h"
 
