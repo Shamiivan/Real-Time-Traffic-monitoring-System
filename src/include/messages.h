@@ -2,8 +2,6 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
-#include <string>
-#include <vector>
 #include "vector.h"
 
 // Message from Radar to Plane
@@ -22,7 +20,7 @@ struct PlaneResponseMsg {
 
 // Structure to represent plane state
 struct PlaneState {
-    std::string id;
+    char id[16]; // Fixed-size character array
     Vector position;
     Vector velocity;
 };
@@ -59,4 +57,8 @@ struct CommunicationCommandMsg {
     double speedX, speedY, speedZ;
 };
 
+struct DataDisplayRequestMsg {
+    bool requestAugmentedData;
+    // Additional fields if needed
+};
 #endif // MESSAGES_H

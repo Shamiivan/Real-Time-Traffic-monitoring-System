@@ -130,21 +130,22 @@ void Plane::messageLoop() {
             }
         } else if (rcvid > 0) {
             PlaneResponseMsg responseMsg;
-            pthread_mutex_lock(&mutex_);
-            strncpy(responseMsg.data.id, id.c_str(), sizeof(responseMsg.data.id));
-            responseMsg.data.id[sizeof(responseMsg.data.id) - 1] = '\0';
-            responseMsg.data.x = position.x;
-            responseMsg.data.y = position.y;
-            responseMsg.data.z = position.z;
-            responseMsg.data.speedX = velocity.x;
-            responseMsg.data.speedY = velocity.y;
-            responseMsg.data.speedZ = velocity.z;
-            pthread_mutex_unlock(&mutex_);
-
+            {
+                std::lock_guard<std::mutex> lock(mtx);
+                strncpy(responseMsg.data.id, id.c_str(), sizeof(responseMsg.data.id));
+                responseMsg.data.id[sizeof(responseMsg.data.id) - 1] = '\0';
+                responseMsg.data.x = position.x;
+                responseMsg.data.y = position.y;
+                responseMsg.data.z = position.z;
+                responseMsg.data.speedX = velocity.x;
+                responseMsg.data.speedY = velocity.y;
+                responseMsg.data.speedZ = velocity.z;
+            }
             MsgReply(rcvid, EOK, &responseMsg, sizeof(responseMsg));
         }
     }
 }
+
 
 int Plane::getChannelId() const {
     return chid_;

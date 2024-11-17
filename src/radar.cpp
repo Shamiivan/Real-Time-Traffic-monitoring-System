@@ -8,7 +8,7 @@
 #include <cstring>
 
 Radar::Radar(int computerSystemCoid)
-    : computerSystemCoid_(computerSystemCoid), running_(false) {
+    : running_(false), computerSystemCoid_(computerSystemCoid) {
 }
 
 Radar::~Radar() {
@@ -88,10 +88,20 @@ void Radar::update_planes() {
         PlaneResponseMsg responseMsg;
         if (query_plane(conn, responseMsg)) {
             PlaneState state;
-            state.id = responseMsg.data.id;
+            // Copy ID using strncpy
+            strncpy(state.id, responseMsg.data.id, sizeof(state.id));
+            state.id[sizeof(state.id) - 1] = '\0'; // Ensure null termination
+
             state.position = Vector(responseMsg.data.x, responseMsg.data.y, responseMsg.data.z);
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
             aircraftData.push_back(state);
+
+            // Display updates
+            std::cout << "Radar received data from Plane " << state.id << ":\n"
+                      << "  Position: (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n"
+                      << "  Velocity: (" << state.velocity.x << ", " << state.velocity.y << ", " << state.velocity.z << ")\n";
+        } else {
+            std::cerr << "Radar: Failed to query plane " << conn.plane->get_id() << "\n";
         }
     }
 
@@ -112,9 +122,11 @@ bool Radar::query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseM
     RadarQueryMsg queryMsg;
     int status = MsgSend(conn.coid, &queryMsg, sizeof(queryMsg), &responseMsg, sizeof(responseMsg));
     if (status == -1) {
-        std::cerr << "Radar: MsgSend to Plane failed: " << strerror(errno) << "\n";
+        std::cerr << "Radar: MsgSend to Plane " << conn.plane->get_id() << " failed: " << strerror(errno) << "\n";
         return false;
     }
     return true;
 }
+
+
 
