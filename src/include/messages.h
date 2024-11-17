@@ -31,6 +31,12 @@ struct RadarToComputerMsg {
     PlaneState aircraftData[100]; // Adjust size as needed
 };
 
+// Message from ComputerSystem to DataDisplay
+struct ComputerToDataDisplayMsg {
+    int numAircraft;
+    PlaneState aircraftData[50]; // Maximum of 50 aircraft
+};
+
 // Operator commands
 struct OperatorCommand {
     enum CommandType {

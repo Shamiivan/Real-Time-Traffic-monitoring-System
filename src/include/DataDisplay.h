@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include <mutex>
-#include "messages.h" // Include messages.h instead
+#include "messages.h"
 
 class DataDisplay {
 public:
@@ -34,6 +34,9 @@ private:
     // Helper methods
     void updateDisplay();
     void requestDataFromComputerSystem();
+
+    // New helper method for scaling positions
+    void scalePositionsToGrid(int& x, int& y, double planeX, double planeY, int gridWidth, int gridHeight, double maxCoord);
 };
 
 #endif // DATADISPLAY_H

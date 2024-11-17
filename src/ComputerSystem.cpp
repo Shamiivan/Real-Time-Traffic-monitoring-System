@@ -152,7 +152,7 @@ void ComputerSystem::run() {
 
 void ComputerSystem::radarLoop() {
     while (running_) {
-        // Receive data from Radar
+        // Prepare to receive the maximum possible message size
         char msg_buffer[sizeof(RadarToComputerMsg)];
         int rcvid = MsgReceive(radar_chid_, &msg_buffer, sizeof(msg_buffer), NULL);
         if (rcvid == -1) {
@@ -164,22 +164,27 @@ void ComputerSystem::radarLoop() {
             }
         }
         if (rcvid == 0) {
-            // Pulse received
             struct _pulse* pulse = (struct _pulse*)&msg_buffer;
             if (pulse->code == PULSE_CODE_EXIT) {
                 break;
             }
         } else if (rcvid > 0) {
-            // Message received
             RadarToComputerMsg* radarMsg = (RadarToComputerMsg*)&msg_buffer;
-            // Process radar data
             pthread_mutex_lock(&data_mutex_);
             aircraftStates_.assign(radarMsg->aircraftData, radarMsg->aircraftData + radarMsg->numAircraft);
             pthread_mutex_unlock(&data_mutex_);
             MsgReply(rcvid, EOK, nullptr, 0);
+
+            // Add logging
+            std::cout << "ComputerSystem: Received " << radarMsg->numAircraft << " aircraft from Radar.\n";
+            for (int i = 0; i < radarMsg->numAircraft; ++i) {
+                PlaneState& state = radarMsg->aircraftData[i];
+                std::cout << "ComputerSystem: Aircraft " << state.id << " Position (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n";
+            }
         }
     }
 }
+
 
 void ComputerSystem::operatorLoop() {
     while (running_) {
@@ -247,7 +252,7 @@ void ComputerSystem::checkForViolations() {
                                          pow(futurePos1.y - futurePos2.y, 2));
             double verticalDist = fabs(futurePos1.z - futurePos2.z);
 
-            if (horizontalDist < 3000.0 && verticalDist < 1000.0) {
+            if (horizontalDist < 3.0 && verticalDist < 1.0) {
                 // Violation detected
                 std::string message = "Potential violation between ";
                 message += aircraftStatesCopy[i].id;
@@ -288,14 +293,26 @@ void ComputerSystem::dataDisplayLoop() {
                 aircraftStatesCopy.resize(MAX_AIRCRAFT);
             }
 
+            // Prepare the reply message
+            ComputerToDataDisplayMsg replyMsg;
+            replyMsg.numAircraft = aircraftStatesCopy.size();
+            for (size_t i = 0; i < replyMsg.numAircraft; ++i) {
+                replyMsg.aircraftData[i] = aircraftStatesCopy[i];
+            }
+
             // Send the data to DataDisplay
-            int status = MsgReply(rcvid, EOK, aircraftStatesCopy.data(), aircraftStatesCopy.size() * sizeof(PlaneState));
+            size_t replySize = sizeof(int) + replyMsg.numAircraft * sizeof(PlaneState);
+            int status = MsgReply(rcvid, EOK, &replyMsg, replySize);
             if (status == -1) {
                 perror("ComputerSystem: Failed to send data to DataDisplay");
+            } else {
+                std::cout << "ComputerSystem: Sent " << replyMsg.numAircraft << " aircraft to DataDisplay.\n";
             }
         }
     }
 }
+
+
 
 
 
