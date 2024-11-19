@@ -97,9 +97,9 @@ void Radar::update_planes() {
             aircraftData.push_back(state);
 
             // Display updates
-            std::cout << "Radar received data from Plane " << state.id << ":\n"
-                      << "  Position: (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n"
-                      << "  Velocity: (" << state.velocity.x << ", " << state.velocity.y << ", " << state.velocity.z << ")\n";
+//            std::cout << "Radar received data from Plane " << state.id << ":\n"
+//                      << "  Position: (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n"
+//                      << "  Velocity: (" << state.velocity.x << ", " << state.velocity.y << ", " << state.velocity.z << ")\n";
         } else {
             std::cerr << "Radar: Failed to query plane " << conn.plane->get_id() << "\n";
         }

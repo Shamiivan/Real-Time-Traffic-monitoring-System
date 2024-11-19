@@ -65,8 +65,8 @@ Vector Plane::update_position() {
     position.x += velocity.x * dt;
     position.y += velocity.y * dt;
     position.z += velocity.z * dt;
-    std::cout << "Plane " << id << " updated position to (" << position.x << ", "
-              << position.y << ", " << position.z << ")"<< std::endl;
+//    std::cout << "Plane " << id << " updated position to (" << position.x << ", "
+//              << position.y << ", " << position.z << ")"<< std::endl;
     return position;
 }
 
