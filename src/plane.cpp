@@ -99,6 +99,7 @@ void Plane::stop() {
     }
 }
 
+
 void* Plane::threadFunc(void* arg) {
     Plane* self = static_cast<Plane*>(arg);
     while (self->running_) {
@@ -145,7 +146,6 @@ void Plane::messageLoop() {
         }
     }
 }
-
 
 int Plane::getChannelId() const {
     return chid_;

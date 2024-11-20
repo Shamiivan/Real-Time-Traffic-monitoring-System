@@ -38,14 +38,18 @@ int main() {
         dataDisplay.start();
 
     // Add planes
-    radar.add_plane("#1", Vector(1, 10, 3), Vector(1, 0, 0));
+    radar.add_plane("#1", Vector(1, 10, 3), Vector(1, 0, 1));
     radar.add_plane("#2", Vector(1, 2, 9), Vector(1, 0, 0));
+    radar.add_plane("#3", Vector(1, 2, 9), Vector(0, 1, 0));
     // Uncomment if needed
     // radar.add_plane("#3", Vector(13, 14, 15), Vector(0, 0, 100));
     // radar.add_plane("#4", Vector(19, 20, 21), Vector(-100, -100, -100));
 
     // Simulation runs for 30 seconds
-    sleep(30);
+    sleep(10);
+
+    radar.remove_plane("#2");
+    std::cout << "[MAIN] : Plane size is " << radar.getPlaneCount() << "\n";
 
     // Stop all systems
     radar.stop();
