@@ -93,9 +93,9 @@ void Plane::start() {
 void Plane::stop() {
     if (running_) {
         running_ = false;
+        ChannelDestroy(chid_);
         pthread_join(thread_, nullptr);
         pthread_join(msg_thread_, nullptr);
-        ChannelDestroy(chid_);
     }
 }
 
