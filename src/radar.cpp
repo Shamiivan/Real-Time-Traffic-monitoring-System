@@ -87,6 +87,9 @@ int Radar::add_plane(std::string id, Vector position, Vector speed) {
 }
 
 int Radar::remove_plane(std::string id) {
+    Plane *planeToRemove = nullptr;
+    int coidToRemove = -1;
+    {
     std::lock_guard<std::mutex> lock(mtx);
 
     // First find the plane in planeConnections_
@@ -95,40 +98,38 @@ int Radar::remove_plane(std::string id) {
             return conn.plane->get_id() == id;
         });
 
-    if (connIt != planeConnections_.end()) {
-        // Store pointer to plane before removing connection
-        Plane* planeToRemove = connIt->plane;
-
-        // Detach connection
-        ConnectDetach(connIt->coid);
-
-        // Remove from planeConnections_
-        planeConnections_.erase(connIt);
-
-        // Find and remove from planes_ vector
-        auto planeIt = std::find_if(planes_.begin(), planes_.end(),
-            [&id](const Plane* plane) {
-                return plane->get_id() == id;
-            });
-
-        if (planeIt != planes_.end()) {
-            // Stop the plane thread
-            planeToRemove->stop();
-
-            // Delete the plane object
-            delete planeToRemove;
-
-            // Remove from planes_ vector
-            planes_.erase(planeIt);
-
-            std::cout << "Plane " << id << " successfully removed from radar\n";
-            std::cout << "[RADAR] : Plane count is now " << planes_.size() << "\n";
-            return 0;
-        }
+    if (connIt == planeConnections_.end()) {
+        std::cerr << "[Radar]: Plane " << id << " not found\n";
+        return -1;
     }
 
-    std::cerr << "Plane " << id << " not found\n";
-    return -1;
+   	// store connection id and plane pointer before removing connection
+    coidToRemove = connIt->coid;
+    planeToRemove = connIt->plane;
+
+    // Find and remove from planes_ vector
+    auto planeIt = std::find_if(planes_.begin(), planes_.end(),
+        [&id](const Plane* plane) {
+            return plane->get_id() == id;
+        });
+
+    if (planeIt == planes_.end()) {
+        std::cerr << "[Radar]: Plane " << id << " not found\n";
+        return -1;
+    }
+
+    // Stop the plane thread
+    planeToRemove->stop();
+    ConnectDetach(coidToRemove);
+    usleep(10000); // Sleep for 1ms to allow the plane to stop
+
+    // remove plane from planes_ vector and planeConnections_ vector
+   	planeConnections_.erase(connIt);
+    planes_.erase(planeIt);
+
+    delete planeToRemove;
+	return 0;
+    }
 }
 
 void Radar::update_planes() {
