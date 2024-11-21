@@ -21,7 +21,7 @@ public:
 
     int add_plane(std::string id, Vector position, Vector speed);
     int remove_plane(std::string id);
-    int isInBounds(Plane& plane, Vector position);
+    int isInBounds(Vector position);
     int getPlaneCount() { return planes_.size(); }
 
 private:

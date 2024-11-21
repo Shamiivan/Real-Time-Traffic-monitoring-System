@@ -134,11 +134,16 @@ int Radar::remove_plane(std::string id) {
 
 void Radar::update_planes() {
     std::vector<PlaneState> aircraftData;
+    std::vector<std::string> planesToRemove;
 
+    {
     std::lock_guard<std::mutex> lock(mtx);
     for (auto& conn : planeConnections_) {
         PlaneResponseMsg responseMsg;
-        if (query_plane(conn, responseMsg)) {
+        if(!query_plane(conn, responseMsg)) {
+            std::cerr << "Radar: Failed to query plane " << conn.plane->get_id() << "\n";
+            continue;
+        }
             PlaneState state;
             // Copy ID using strncpy
             strncpy(state.id, responseMsg.data.id, sizeof(state.id));
@@ -147,15 +152,22 @@ void Radar::update_planes() {
             state.position = Vector(responseMsg.data.x, responseMsg.data.y, responseMsg.data.z);
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
 
+            // check if plane is in bounds
+            if (isInBounds(state.position) == -1) {
+                std::cerr << "Radar: Plane " << state.id << " is out of bounds\n";
+                planesToRemove.push_back(state.id);
+                continue;
+            }
+
             aircraftData.push_back(state);
 
             // Display updates
 //            std::cout << "Radar received data from Plane " << state.id << ":\n"
 //                      << "  Position: (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n"
 //                      << "  Velocity: (" << state.velocity.x << ", " << state.velocity.y << ", " << state.velocity.z << ")\n";
-        } else {
-            std::cerr << "Radar: Failed to query plane " << conn.plane->get_id() << "\n";
-        }
+       }
+
+
     }
 
     // Send data to ComputerSystem
@@ -169,23 +181,21 @@ void Radar::update_planes() {
     if (status == -1) {
         perror("Radar: Failed to send data to ComputerSystem");
     }
+
+    for (const auto& id : planesToRemove) {
+      remove_plane(id);
+  	}
 }
 
-int Radar::isInBounds(Plane& plane, Vector position) {
-    if (position.x < radarBounds.startX || position.x > radarBounds.endX) {
-        std::cout << "Plane " << plane.get_id() << " is out of bounds in the x direction\n";
-        plane.stop();
+int Radar::isInBounds(Vector position) {
+	if (position.x < radarBounds.startX || position.x > radarBounds.endX) {
         return -1;
     } else if (position.y < radarBounds.startY || position.y > radarBounds.endY) {
-        std::cout << "Plane " << plane.get_id() << " is out of bounds in the y direction\n";
-        plane.stop();
         return -1;
     } else if (position.z < radarBounds.startZ || position.z > radarBounds.endZ) {
-        std::cout << "Plane " << plane.get_id() << " is out of bounds in the z direction\n";
-        plane.stop();
         return -1;
-      }
-      return 0;
+    }
+    return 0;
 }
 bool Radar::query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseMsg) {
     RadarQueryMsg queryMsg;
