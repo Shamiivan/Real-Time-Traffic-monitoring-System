@@ -38,27 +38,59 @@ int main() {
         dataDisplay.start();
 
     // Add planes
-    radar.add_plane("#1", Vector(1, 10, 3), Vector(10, 0, 1));
-    radar.add_plane("#2", Vector(1, 2, 9), Vector(10, 0, 0));
-    radar.add_plane("#3", Vector(1, 2, 9), Vector(0, 10, 0));
-
-    // Uncomment if needed
-     radar.add_plane("#4", Vector(13, 14, 15), Vector(0, 0, 1));
-     radar.add_plane("#5", Vector(19, 20, 21), Vector(-1, -1, -1));
+    radar.add_plane("Plane1", Vector(1, 2, 3), Vector(100, 0, 0));
+    radar.add_plane("Plane2", Vector(7, 8, 9), Vector(0, 100, 0));
+    radar.add_plane("Plane3", Vector(13, 14, 15), Vector(0, 0, 100));
+    radar.add_plane("Plane4", Vector(19, 20, 21), Vector(-100, -100, -100));
+    read_planes(radar);
 
     // Simulation runs for 30 seconds
-
     sleep(30);
+
     // Stop all systems
     radar.stop();
-    dataDisplay.stop();
     computerSystem.stop();
-
 
     // Detach connections
     ConnectDetach(computerSystemRadarCoid);
-    ConnectDetach(computerSystemDataDisplayCoid);
 
     return 0;
 }
+
+//read and create planes from planes.txt file
+//IDs are hardcoded for now, they are in the .txt file.
+void read_planes(Radar& radar) {
+	std::string filePath = "./planes.txt";
+	std::ifstream plane_file;
+	plane_file.open(filePath);
+	Vector Position;
+	Vector Velocity;
+	std::string ID;
+
+
+	if(!plane_file.is_open()){
+		std::cerr << "Error: Could not open file " << filePath << std::endl;
+	}
+
+	std::string line;
+	    while (std::getline(plane_file, line, ';'))
+	    {  // Split each line by semicolons
+	    		std::vector<std::string> row;
+	    		std::stringstream ss(line);
+	    		std::string value;
+
+	    	        // Split each entry in the line by commas
+	    	        while (std::getline(ss, value, ',')) {
+	    	            row.push_back(value);
+	    	        }
+	    	    ID = row[0];
+	    	    Position = {std::stof(row[1]), std::stof(row[2]), std::stof(row[3])};
+	    	    Velocity = {std::stof(row[4]), std::stof(row[5]), std::stof(row[6])};
+	    	    std::cout<< row[0] << std::endl;
+	    	    radar.add_plane(ID, Velocity, Position);
+	    }
+
+	    plane_file.close();
+}
+
 
