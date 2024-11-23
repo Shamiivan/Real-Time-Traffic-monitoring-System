@@ -175,12 +175,12 @@ void ComputerSystem::radarLoop() {
             pthread_mutex_unlock(&data_mutex_);
             MsgReply(rcvid, EOK, nullptr, 0);
 
-            // Add logging
-            std::cout << "ComputerSystem: Received " << radarMsg->numAircraft << " aircraft from Radar.\n";
-            for (int i = 0; i < radarMsg->numAircraft; ++i) {
-                PlaneState& state = radarMsg->aircraftData[i];
-                std::cout << "ComputerSystem: Aircraft " << state.id << " Position (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n";
-            }
+//            // Add logging
+//            std::cout << "ComputerSystem: Received " << radarMsg->numAircraft << " aircraft from Radar.\n";
+//            for (int i = 0; i < radarMsg->numAircraft; ++i) {
+//                PlaneState& state = radarMsg->aircraftData[i];
+//                std::cout << "ComputerSystem: Aircraft " << state.id << " Position (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n";
+//            }
         }
     }
 }
@@ -296,7 +296,7 @@ void ComputerSystem::dataDisplayLoop() {
             // Prepare the reply message
             ComputerToDataDisplayMsg replyMsg;
             replyMsg.numAircraft = aircraftStatesCopy.size();
-            for (size_t i = 0; i < replyMsg.numAircraft; ++i) {
+            for (int i = 0; i < replyMsg.numAircraft; ++i) {
                 replyMsg.aircraftData[i] = aircraftStatesCopy[i];
             }
 
@@ -305,8 +305,6 @@ void ComputerSystem::dataDisplayLoop() {
             int status = MsgReply(rcvid, EOK, &replyMsg, replySize);
             if (status == -1) {
                 perror("ComputerSystem: Failed to send data to DataDisplay");
-            } else {
-                std::cout << "ComputerSystem: Sent " << replyMsg.numAircraft << " aircraft to DataDisplay.\n";
             }
         }
     }

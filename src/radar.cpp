@@ -152,7 +152,7 @@ void Radar::update_planes() {
             state.position = Vector(responseMsg.data.x, responseMsg.data.y, responseMsg.data.z);
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
 
-            // check if plane is in bounds
+//             check if plane is in bounds
             if (isInBounds(state.position) == -1) {
                 std::cerr << "Radar: Plane " << state.id << " is out of bounds\n";
                 planesToRemove.push_back(state.id);

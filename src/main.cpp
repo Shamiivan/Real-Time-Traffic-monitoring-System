@@ -10,6 +10,11 @@
 #include "DataDisplay.h"
 #include "vector.h"
 #include "messages.h"
+#include <fstream>
+#include <sstream>
+
+
+void read_planes(Radar&);
 
 int main() {
     // Create ComputerSystem
@@ -31,6 +36,8 @@ int main() {
 
     // Create Radar and connect to ComputerSystem
     Radar radar(computerSystemRadarCoid);
+    read_planes(radar);
+
     radar.start();
 
     // Create DataDisplay and connect to ComputerSystem
@@ -38,14 +45,17 @@ int main() {
         dataDisplay.start();
 
     // Add planes
-    radar.add_plane("Plane1", Vector(1, 2, 3), Vector(100, 0, 0));
-    radar.add_plane("Plane2", Vector(7, 8, 9), Vector(0, 100, 0));
-    radar.add_plane("Plane3", Vector(13, 14, 15), Vector(0, 0, 100));
-    radar.add_plane("Plane4", Vector(19, 20, 21), Vector(-100, -100, -100));
-    read_planes(radar);
+//    radar.add_plane("Plane1", Vector(1, 2, 3), Vector(100, 0, 0));
+//    radar.add_plane("Plane2", Vector(7, 8, 9), Vector(0, 100, 0));
+//    radar.add_plane("Plane3", Vector(13, 14, 15), Vector(0, 0, 100));
+//    radar.add_plane("Plane4", Vector(19, 20, 21), Vector(-100, -100, -100));
+
 
     // Simulation runs for 30 seconds
-    sleep(30);
+    sleep(10);
+    radar.remove_plane("1");
+    radar.remove_plane("2");
+    sleep(20);
 
     // Stop all systems
     radar.stop();
@@ -60,7 +70,7 @@ int main() {
 //read and create planes from planes.txt file
 //IDs are hardcoded for now, they are in the .txt file.
 void read_planes(Radar& radar) {
-	std::string filePath = "./planes.txt";
+	std::string filePath = "./planes_10.txt";
 	std::ifstream plane_file;
 	plane_file.open(filePath);
 	Vector Position;
@@ -74,21 +84,29 @@ void read_planes(Radar& radar) {
 
 	std::string line;
 	    while (std::getline(plane_file, line, ';'))
-	    {  // Split each line by semicolons
+	    {
+
+	        if (line.empty() || line == "\n") {
+	            continue;
+	        }
+
+	        // Remove any trailing newline characters
+	        line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+	    	// Split each line by semicolons
 	    		std::vector<std::string> row;
 	    		std::stringstream ss(line);
 	    		std::string value;
 
-	    	        // Split each entry in the line by commas
-	    	        while (std::getline(ss, value, ',')) {
-	    	            row.push_back(value);
-	    	        }
+					// Split each entry in the line by commas
+					while (std::getline(ss, value, ',')) {
+							row.push_back(value);
+					}
 	    	    ID = row[0];
 	    	    Position = {std::stof(row[1]), std::stof(row[2]), std::stof(row[3])};
 	    	    Velocity = {std::stof(row[4]), std::stof(row[5]), std::stof(row[6])};
 	    	    std::cout<< row[0] << std::endl;
 	    	    radar.add_plane(ID, Velocity, Position);
-	    }
+	   }
 
 	    plane_file.close();
 }
