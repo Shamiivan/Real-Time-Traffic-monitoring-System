@@ -25,6 +25,7 @@ public:
     int getPlaneCount() { return planes_.size(); }
 
 private:
+
     static void* threadFunc(void* arg);
     void run();
 
@@ -42,6 +43,7 @@ private:
     pthread_t thread_;
     bool running_;
     std::mutex mtx;
+    std::mutex planeMtx;
 
     int computerSystemCoid_;
     struct bounds {

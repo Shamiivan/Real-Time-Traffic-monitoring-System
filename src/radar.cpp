@@ -77,7 +77,7 @@ int Radar::add_plane(std::string id, Vector position, Vector speed) {
     }
 
     {
-        std::lock_guard<std::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(planeMtx);
         planes_.push_back(plane);
         PlaneConnection conn = { plane, coid };
         planeConnections_.push_back(conn);
@@ -136,8 +136,8 @@ void Radar::update_planes() {
     std::vector<PlaneState> aircraftData;
     std::vector<std::string> planesToRemove;
 
-    {
-    std::lock_guard<std::mutex> lock(mtx);
+
+    std::lock_guard<std::mutex> lock(planeMtx);
     for (auto& conn : planeConnections_) {
         PlaneResponseMsg responseMsg;
         if(!query_plane(conn, responseMsg)) {
@@ -151,15 +151,16 @@ void Radar::update_planes() {
 
             state.position = Vector(responseMsg.data.x, responseMsg.data.y, responseMsg.data.z);
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
-
 //             check if plane is in bounds
             if (isInBounds(state.position) == -1) {
                 std::cerr << "Radar: Plane " << state.id << " is out of bounds\n";
                 planesToRemove.push_back(state.id);
                 continue;
             }
+            state.coid = conn.coid;
+             aircraftData.push_back(state);
 
-            aircraftData.push_back(state);
+
 
             // Display updates
 //            std::cout << "Radar received data from Plane " << state.id << ":\n"
@@ -206,7 +207,6 @@ bool Radar::query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseM
     }
     return true;
 }
-
 
 
 

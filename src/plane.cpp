@@ -29,6 +29,12 @@ Plane::Plane(
         perror("Plane: Failed to create channel");
         exit(EXIT_FAILURE);
     }
+
+    chid1_ = ChannelCreate(0);
+    if (chid_ == -1) {
+        perror("Plane: Failed to create channel");
+        exit(EXIT_FAILURE);
+    }
 }
 
 Plane::~Plane() {
@@ -60,7 +66,7 @@ void Plane::set_pos(Vector position) {
     this->position = position;
 }
 
-Vector Plane::update_position() {
+Vector Plane::update_position() {//test
     std::lock_guard<std::mutex> lock(mtx);
     position.x += velocity.x * dt;
     position.y += velocity.y * dt;
@@ -88,6 +94,15 @@ void Plane::start() {
     } else {
         std::cout << "Plane " << id << " message thread started.\n";
     }
+
+    //start the course correction thread. Used for collision avoidance.
+    ret = pthread_create(&course_currect_thread_, nullptr, Plane::courseCorrectThreadFunc, this);
+        if (ret != 0) {
+            perror("Plane: Failed to create course correction thread");
+            exit(EXIT_FAILURE);
+        } else {
+            std::cout << "Plane " << id << " course correction thread started.\n";
+        }
 }
 
 void Plane::stop() {
@@ -96,6 +111,7 @@ void Plane::stop() {
         ChannelDestroy(chid_);
         pthread_join(thread_, nullptr);
         pthread_join(msg_thread_, nullptr);
+        pthread_join(course_currect_thread_, nullptr);
     }
 }
 
@@ -114,6 +130,13 @@ void* Plane::msgThreadFunc(void* arg) {
     self->messageLoop();
     return nullptr;
 }
+
+void* Plane::courseCorrectThreadFunc(void* arg) {
+    Plane* self = static_cast<Plane*>(arg);
+    self->courseCorrectLoop();
+    return nullptr;
+}
+
 
 void Plane::messageLoop() {
     int rcvid;
@@ -149,4 +172,28 @@ void Plane::messageLoop() {
 
 int Plane::getChannelId() const {
     return chid_;
+}
+
+int Plane::getChannelId1() const {
+    return chid1_;
+}
+
+void Plane::courseCorrectLoop() {
+	int rcvid;
+	courseCorrectionMsg msg;
+	while(running_) {
+		rcvid = MsgReceive(chid1_, &msg, sizeof(msg), NULL);
+		if (rcvid == -1) {
+			if (errno == EINTR) {
+				continue;
+		    } else {
+		    	perror("Plane: Failed to receive course correction");
+		        break;
+		    }
+		}
+		else if (rcvid > 0) {
+			std::cout << "Plane " << id << " Received Course Correction alert.\n";
+			set_velocity(msg.newVelocity);
+		}
+	}
 }

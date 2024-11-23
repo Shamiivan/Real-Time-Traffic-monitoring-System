@@ -10,7 +10,7 @@
 #include <cmath>
 #include <errno.h>
 
-ComputerSystem::ComputerSystem() : running_(false), lookaheadTime_(180) { // Default 'n' is 180 seconds
+ComputerSystem::ComputerSystem() : running_(false), lookaheadTime_(3) { // Default 'n' is 180 seconds
     pthread_mutex_init(&data_mutex_, nullptr);
 
     // Create channels for receiving messages
@@ -259,6 +259,11 @@ void ComputerSystem::checkForViolations() {
                 message += " and ";
                 message += aircraftStatesCopy[j].id;
                 emitAlert(message);
+
+                Vector velocity = aircraftStatesCopy[i].velocity;
+                velocity.z += 1;
+                std::lock_guard<std::mutex> lock(mtx);
+                sendCourseCorrection(aircraftStatesCopy[i].id, velocity,aircraftStatesCopy[i].coid);
             }
         }
     }
@@ -330,3 +335,19 @@ int ComputerSystem::getDataDisplayChannelId() const {
 int ComputerSystem::getOperatorChannelId() const {
     return operator_chid_;
 }
+
+void ComputerSystem::sendCourseCorrection(const std::string& planeId, const Vector& velocity, int coid){
+	courseCorrectionMsg msg;
+	msg.id = planeId;
+	msg.newVelocity = velocity;
+
+	bool status = MsgSend(coid, &msg, sizeof(msg), nullptr, 0);
+	if (status == -1){
+		perror("ComputerSystem: Failed to send Course Correction to Radar");
+	}else{
+		std::cout << "ComputerSystem: Sent Course Correction to plane" << planeId <<"\n";
+	}
+}
+
+
+
