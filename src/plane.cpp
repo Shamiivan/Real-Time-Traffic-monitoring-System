@@ -29,6 +29,12 @@ Plane::Plane(
         perror("Plane: Failed to create channel");
         exit(EXIT_FAILURE);
     }
+
+    chid1_ = ChannelCreate(0);
+    if (chid_ == -1) {
+        perror("Plane: Failed to create channel");
+        exit(EXIT_FAILURE);
+    }
 }
 
 Plane::~Plane() {
@@ -167,11 +173,15 @@ int Plane::getChannelId() const {
     return chid_;
 }
 
+int Plane::getChannelId1() const {
+    return chid1_;
+}
+
 void Plane::courseCorrectLoop() {
 	int rcvid;
 	courseCorrectionMsg msg;
 	while(running_) {
-		rcvid = MsgReceive(chid_, &msg, sizeof(msg), NULL);
+		rcvid = MsgReceive(chid1_, &msg, sizeof(msg), NULL);
 		if (rcvid == -1) {
 			if (errno == EINTR) {
 				continue;

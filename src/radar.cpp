@@ -71,7 +71,7 @@ int Radar::add_plane(std::string id, Vector position, Vector speed) {
     }
 
     {
-        std::lock_guard<std::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(planeMtx);
         planes_.push_back(plane);
         PlaneConnection conn = { plane, coid };
         planeConnections_.push_back(conn);
@@ -83,7 +83,7 @@ int Radar::add_plane(std::string id, Vector position, Vector speed) {
 void Radar::update_planes() {
     std::vector<PlaneState> aircraftData;
 
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(planeMtx);
     for (auto& conn : planeConnections_) {
         PlaneResponseMsg responseMsg;
         if (query_plane(conn, responseMsg)) {

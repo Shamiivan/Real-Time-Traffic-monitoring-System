@@ -27,6 +27,7 @@ public:
     Vector update_position();
 
     int getChannelId() const;
+    int getChannelId1() const;
 
 private:
     static void* threadFunc(void* arg);
@@ -47,6 +48,7 @@ private:
 
     // IPC variables
     int chid_; // Channel ID for receiving messages
+    int chid1_;
 
     // Time step for position updates
     double dt;

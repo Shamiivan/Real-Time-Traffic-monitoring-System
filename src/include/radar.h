@@ -38,6 +38,7 @@ private:
     pthread_t thread_;
     bool running_;
     std::mutex mtx;
+    std::mutex planeMtx;
 
     int computerSystemCoid_;
 };
