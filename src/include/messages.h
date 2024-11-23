@@ -4,9 +4,15 @@
 
 #include "vector.h"
 
+struct courseCorrectionMsg {
+	std::string id;
+	Vector newVelocity;
+};
+
 // Message from Radar to Plane
 struct RadarQueryMsg {
     int aircraft_id; // Optional
+
 };
 
 // Message from Plane to Radar
@@ -23,6 +29,7 @@ struct PlaneState {
     char id[16]; // Fixed-size character array
     Vector position;
     Vector velocity;
+    int coid;
 };
 
 // Message from Radar to ComputerSystem

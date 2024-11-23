@@ -10,6 +10,7 @@
 #include "vector.h"
 #include <sys/neutrino.h>
 
+
 // Define pulse codes
 #define PULSE_CODE_EXIT (_PULSE_CODE_MINAVAIL + 1)
 
@@ -36,6 +37,9 @@ private:
     void radarLoop();
     void operatorLoop();
     void dataDisplayLoop();
+
+    //int getPlaneChannelIdById(const std::string& planeId);
+    void sendCourseCorrection(const std::string& planeId, const Vector& velocity, int coid);
 
     // Methods for separation checks and alerts
     void checkForViolations();

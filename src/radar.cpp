@@ -94,6 +94,7 @@ void Radar::update_planes() {
 
             state.position = Vector(responseMsg.data.x, responseMsg.data.y, responseMsg.data.z);
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
+            state.coid = conn.coid;
             aircraftData.push_back(state);
 
             // Display updates
@@ -127,6 +128,5 @@ bool Radar::query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseM
     }
     return true;
 }
-
 
 

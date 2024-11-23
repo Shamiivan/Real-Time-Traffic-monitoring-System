@@ -31,7 +31,9 @@ public:
 private:
     static void* threadFunc(void* arg);
     static void* msgThreadFunc(void* arg);
+    static void* courseCorrectThreadFunc(void* arg);
     void messageLoop();
+    void courseCorrectLoop();
 
     std::string id;
     Vector position;
@@ -39,6 +41,7 @@ private:
 
     pthread_t thread_;       // Position update thread
     pthread_t msg_thread_;   // Message handling thread
+    pthread_t course_currect_thread_; //course correction
     bool running_;
     mutable std::mutex mtx;
 

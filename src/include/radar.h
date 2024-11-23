@@ -20,6 +20,7 @@ public:
     int add_plane(std::string id, Vector position, Vector speed);
 
 private:
+
     static void* threadFunc(void* arg);
     void run();
 
