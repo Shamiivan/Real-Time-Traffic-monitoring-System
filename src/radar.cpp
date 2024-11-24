@@ -64,6 +64,7 @@ int Radar::add_plane(std::string id, Vector position, Vector velocity) {
 
     // Connect to the Plane's channel
     int coid = ConnectAttach(ND_LOCAL_NODE, 0, plane->getChannelId(), _NTO_SIDE_CHANNEL, 0);
+    int coid_comp = plane->getChannelIdComp();
     if (coid == -1) {
         LOG_ERROR("Radar", "Failed to connect to Plane channel");
         plane->stop();
@@ -147,6 +148,7 @@ void Radar::update_planes() {
 
             state.position = Vector(responseMsg.data.x, responseMsg.data.y, responseMsg.data.z);
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
+            state.coid_comp = conn.coid_comp;
 
 //             check if plane is in bounds
             if (!radarBounds.contains(state.position)) {
@@ -159,7 +161,7 @@ void Radar::update_planes() {
                 continue;
             }
 
-            state.coid = conn.coid;
+            state.coid_comp = conn.coid_comp;
             aircraftData.push_back(state);
 //        LOG_INFO("Radar", "Plane " + state.id + " is at position (" + std::to_string(state.position.x) + ", " +
 //                 std::to_string(state.position.y) + ", " + std::to_string(state.position.z) + ")");

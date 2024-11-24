@@ -29,7 +29,7 @@ struct PlaneState {
     char id[16]; // Fixed-size character array
     Vector position;
     Vector velocity;
-    int coid;
+    int coid_comp;
 };
 
 // Message from Radar to ComputerSystem

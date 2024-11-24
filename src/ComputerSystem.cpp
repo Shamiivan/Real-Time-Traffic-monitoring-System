@@ -253,9 +253,9 @@ void ComputerSystem::checkForViolations() {
                 message += aircraftStatesCopy[j].id;
                 LOG_WARNING("ComputerSystem", message);
                 Vector velocity = aircraftStatesCopy[i].velocity;
-                velocity.z += 1;
+                velocity.z += 1000;
                 std::lock_guard<std::mutex> lock(mtx);
-                sendCourseCorrection(aircraftStatesCopy[i].id, velocity,aircraftStatesCopy[i].coid);
+                sendCourseCorrection(aircraftStatesCopy[i].id, velocity,aircraftStatesCopy[i].coid_comp);
             }
 
         }
