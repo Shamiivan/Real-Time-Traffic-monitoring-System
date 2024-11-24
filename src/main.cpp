@@ -21,7 +21,7 @@ int main() {
 	auto & logger = Logger::getInstance();
 	logger.enable(Logger::Level::DEBUG);
 	std::string tag = "Main";
-	logger.disable(Logger::Level::INFO);
+//	logger.disable(Logger::Level::INFO);
 	LOG_INFO("Main", "System Started");
 
     // Create ComputerSystem
@@ -70,8 +70,8 @@ int main() {
 //read and create planes from planes.txt file
 //IDs are hardcoded for now, they are in the .txt file.
 void read_planes(Radar& radar) {
-//	std::string filePath = "./planes.txt";
-	std::string filePath = "./planes_10.txt";
+	std::string filePath = "./planes.txt";
+//	std::string filePath = "./planes_10.txt";
 	std::ifstream plane_file;
 	plane_file.open(filePath);
 	Vector Position;
