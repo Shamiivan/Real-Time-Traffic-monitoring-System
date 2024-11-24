@@ -65,12 +65,6 @@ struct OperatorCommandMsg {
     OperatorCommand command;
 };
 
-// Message from ComputerSystem to CommunicationSystem
-struct CommunicationCommandMsg {
-    char aircraftId[16];
-    double speedX, speedY, speedZ;
-};
-
 struct DataDisplayRequestMsg {
     bool requestAugmentedData;
     // Additional fields if needed
