@@ -16,6 +16,11 @@ Plane::Plane() : running_(false), dt(1.0) {
         perror("Plane: Failed to create channel");
         exit(EXIT_FAILURE);
     }
+    chid_comp_ = ChannelCreate(0);
+        if (chid_comp_ == -1) {
+            perror("Plane: Failed to create channel");
+            exit(EXIT_FAILURE);
+        }
 }
 
 Plane::Plane(
@@ -26,13 +31,13 @@ Plane::Plane(
     pthread_mutex_init(&mutex_, nullptr);
     chid_ = ChannelCreate(0);
     if (chid_ == -1) {
-        perror("Plane: Failed to create channel");
+        perror("Plane: Failed to create radar channel");
         exit(EXIT_FAILURE);
     }
 
-    chid1_ = ChannelCreate(0);
-    if (chid_ == -1) {
-        perror("Plane: Failed to create channel");
+    chid_comp_ = ChannelCreate(0);
+    if (chid_comp_ == -1) {
+        perror("Plane: Failed to create computer channel");
         exit(EXIT_FAILURE);
     }
 }
@@ -109,6 +114,7 @@ void Plane::stop() {
     if (running_) {
         running_ = false;
         ChannelDestroy(chid_);
+        ChannelDestroy(chid_comp_);
         pthread_join(thread_, nullptr);
         pthread_join(msg_thread_, nullptr);
         pthread_join(course_currect_thread_, nullptr);
@@ -173,15 +179,15 @@ int Plane::getChannelId() const {
     return chid_;
 }
 
-int Plane::getChannelId1() const {
-    return chid1_;
+int Plane::getChannelIdComp() const {
+    return chid_comp_;
 }
 
 void Plane::courseCorrectLoop() {
 	int rcvid;
 	courseCorrectionMsg msg;
 	while(running_) {
-		rcvid = MsgReceive(chid1_, &msg, sizeof(msg), NULL);
+		rcvid = MsgReceive(chid_comp_, &msg, sizeof(msg), NULL);
 		if (rcvid == -1) {
 			if (errno == EINTR) {
 				continue;

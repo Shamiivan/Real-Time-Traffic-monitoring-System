@@ -63,6 +63,8 @@ int Radar::add_plane(std::string id, Vector position, Vector speed) {
 
     // Connect to the Plane's channel
     int coid = ConnectAttach(ND_LOCAL_NODE, 0, plane->getChannelId(), _NTO_SIDE_CHANNEL, 0);
+    int coid_comp = plane->getChannelIdComp();
+    //int coidComp = plane->getChannelIdComp();
     if (coid == -1) {
         perror("Radar: Failed to connect to Plane channel");
         plane->stop();
@@ -73,7 +75,7 @@ int Radar::add_plane(std::string id, Vector position, Vector speed) {
     {
         std::lock_guard<std::mutex> lock(planeMtx);
         planes_.push_back(plane);
-        PlaneConnection conn = { plane, coid };
+        PlaneConnection conn = { plane, coid, coid_comp };
         planeConnections_.push_back(conn);
     }
 
@@ -94,7 +96,10 @@ void Radar::update_planes() {
 
             state.position = Vector(responseMsg.data.x, responseMsg.data.y, responseMsg.data.z);
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
-            state.coid = conn.coid;
+            state.coid_comp = conn.coid_comp;
+
+
+
             aircraftData.push_back(state);
 
             // Display updates

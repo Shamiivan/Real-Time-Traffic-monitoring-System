@@ -29,6 +29,7 @@ private:
     struct PlaneConnection {
         Plane* plane;
         int coid; // Connection ID to the Plane's channel
+        int coid_comp; //connection ID for computer to plane's computer channel
     };
 
     bool query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseMsg);
