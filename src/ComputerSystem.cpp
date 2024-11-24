@@ -326,7 +326,8 @@ void ComputerSystem::sendCourseCorrection(const std::string& planeId, const Vect
 	msg.id = planeId;
 	msg.newVelocity = velocity;
 
-	bool status = MsgSend(coid, &msg, sizeof(msg), nullptr, 0);
+	int con = ConnectAttach(ND_LOCAL_NODE, 0, coid, _NTO_SIDE_CHANNEL, 0);
+	bool status = MsgSend(con, &msg, sizeof(msg), nullptr, 0);
 	if (status == -1){
         LOG_ERROR("ComputerSystem", "Failed to send Course Correction to Radar");
 	}
