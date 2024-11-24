@@ -12,6 +12,7 @@
 struct PlaneConnection {
    Plane* plane;
    int coid; // Connection ID to the Plane's channel
+   int coid_comp;
 };
 
 struct Bounds {
@@ -53,7 +54,6 @@ private :
     bool running_;
     std::mutex mtx;
     std::mutex planeMtx;
-
     int computerSystemCoid_;
     const Bounds radarBounds{};  // Using default initialization with constants
 };
