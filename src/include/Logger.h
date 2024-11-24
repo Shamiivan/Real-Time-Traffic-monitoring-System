@@ -6,6 +6,7 @@
 #include <iostream>
 #include <mutex>
 #include <bitset>
+#include <sstream>
 
 class Logger {
 public:
@@ -50,9 +51,32 @@ public:
     void log(Level level, const std::string tag, const std::string& message) {
         if (isEnabled(level)) {
             std::lock_guard<std::mutex> lock(mutex);
-            std::cout << "[" << levelToString(level) << "] " << "[" << tag << "] "
+            std::cout << getTimestamp() << " [" << levelToString(level) << "] " << "[" << tag << "] "
                       << message << std::endl;
         }
+    }
+
+    std::string getTimestamp() {
+        time_t now = time(nullptr);
+        struct tm* timeinfo = localtime(&now);
+
+        char buffer[9];  // HH:MM:SS\0
+        strftime(buffer, sizeof(buffer), "%H:%M:%S", timeinfo);
+
+        std::stringstream ss;
+        ss << buffer;
+
+        // Get milliseconds using a simpler approach
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        int ms = ts.tv_nsec / 1000000;  // Convert nanoseconds to milliseconds
+
+        // Format milliseconds with leading zeros
+        char ms_buffer[5];
+        snprintf(ms_buffer, sizeof(ms_buffer), ".%03d", ms);
+        ss << ms_buffer;
+
+        return ss.str();
     }
 
 private:

@@ -21,8 +21,8 @@ int main() {
 	auto & logger = Logger::getInstance();
 
 	std::string tag = "Main";
-//	logger.disable(Logger::Level::INFO);
-	LOG_INFO(tag, "System Started");
+	logger.disable(Logger::Level::INFO);
+	LOG_INFO("Main", "System Started");
 
     // Create ComputerSystem
     ComputerSystem computerSystem;
@@ -51,29 +51,23 @@ int main() {
         DataDisplay dataDisplay(computerSystemDataDisplayCoid);
         dataDisplay.start();
 
-    // Add planes
-    radar.add_plane("#1", Vector(1, 20, 3), Vector(0, -1, 0));
-    radar.add_plane("#2", Vector(1, 2, 3), Vector(0, 1, 0));
 
     // Uncomment if needed
     // radar.add_plane("#3", Vector(13, 14, 15), Vector(0, 0, 100));
     // radar.add_plane("#4", Vector(19, 20, 21), Vector(-100, -100, -100));
 
-    // Simulation runs for 30 seconds
-    sleep(10);
-    radar.remove_plane("1");
-    radar.remove_plane("2");
-    sleep(20);
+        while(true){};
 
-    // Stop all systems
-    radar.stop();
-    dataDisplay.stop();
-    computerSystem.stop();
+//    // Stop all systems
+//    radar.stop();
+//    dataDisplay.stop();
+//    computerSystem.stop();
 
 
     // Detach connections
     ConnectDetach(computerSystemRadarCoid);
     ConnectDetach(computerSystemDataDisplayCoid);
+    LOG_INFO("Main", "PROGRAM DONE");
 
     return 0;
 }
@@ -81,7 +75,8 @@ int main() {
 //read and create planes from planes.txt file
 //IDs are hardcoded for now, they are in the .txt file.
 void read_planes(Radar& radar) {
-	std::string filePath = "./planes_10.txt";
+	std::string filePath = "./planes.txt";
+//	std::string filePath = "./planes_10.txt";
 	std::ifstream plane_file;
 	plane_file.open(filePath);
 	Vector Position;

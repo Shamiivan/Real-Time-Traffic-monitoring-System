@@ -10,12 +10,6 @@
 
 Radar::Radar(int computerSystemCoid)
     : running_(false), computerSystemCoid_(computerSystemCoid) {
-    radarBounds.startX = 0;
-    radarBounds.startY = 0;
-    radarBounds.startZ = 0;
-    radarBounds.endX = 50;
-    radarBounds.endY = 50;
-    radarBounds.endZ = 50;
 }
 
 Radar::~Radar() {
@@ -153,9 +147,14 @@ void Radar::update_planes() {
 
             state.position = Vector(responseMsg.data.x, responseMsg.data.y, responseMsg.data.z);
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
+
 //             check if plane is in bounds
-            if (isInBounds(state.position) == -1) {
-                LOG_WARNING("Radar", "Plane " + std::string(state.id) + " is out of bounds");
+            if (!radarBounds.contains(state.position)) {
+               LOG_WARNING("Radar",
+                "Plane " + std::string(state.id) + " out of bounds at (" +
+                std::to_string(state.position.x) + ", " +
+                std::to_string(state.position.y) + ", " +
+                std::to_string(state.position.z) + ")");
                 planesToRemove.push_back(state.id);
                 continue;
             }
@@ -172,6 +171,10 @@ void Radar::update_planes() {
     // Send data to ComputerSystem
     RadarToComputerMsg radarMsg;
     radarMsg.numAircraft = aircraftData.size();
+    if (radarMsg.numAircraft < 0) {
+        LOG_ERROR("Radar", "Invalid number of aircraft: " + std::to_string(radarMsg.numAircraft));
+        return;
+    }
     for (int i = 0; i < radarMsg.numAircraft; ++i) {
         radarMsg.aircraftData[i] = aircraftData[i];
     }
@@ -187,16 +190,6 @@ void Radar::update_planes() {
   	}
 }
 
-int Radar::isInBounds(Vector position) {
-	if (position.x < radarBounds.startX || position.x > radarBounds.endX) {
-        return -1;
-    } else if (position.y < radarBounds.startY || position.y > radarBounds.endY) {
-        return -1;
-    } else if (position.z < radarBounds.startZ || position.z > radarBounds.endZ) {
-        return -1;
-    }
-    return 0;
-}
 bool Radar::query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseMsg) {
     RadarQueryMsg queryMsg;
     int status = MsgSend(conn.coid, &queryMsg, sizeof(queryMsg), &responseMsg, sizeof(responseMsg));
