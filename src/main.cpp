@@ -12,11 +12,18 @@
 #include "messages.h"
 #include <fstream>
 #include <sstream>
+#include "Logger.h"
 
 
 void read_planes(Radar&);
 
 int main() {
+	auto & logger = Logger::getInstance();
+
+	std::string tag = "Main";
+//	logger.disable(Logger::Level::INFO);
+	LOG_INFO(tag, "System Started");
+
     // Create ComputerSystem
     ComputerSystem computerSystem;
     computerSystem.start();
@@ -83,7 +90,7 @@ void read_planes(Radar& radar) {
 
 
 	if(!plane_file.is_open()){
-		std::cerr << "Error: Could not open file " << filePath << std::endl;
+      LOG_ERROR("Main", "Could not open file " + filePath);
 	}
 
 	std::string line;
@@ -108,7 +115,6 @@ void read_planes(Radar& radar) {
 	    	    ID = row[0];
 	    	    Position = {std::stof(row[1]), std::stof(row[2]), std::stof(row[3])};
 	    	    Velocity = {std::stof(row[4]), std::stof(row[5]), std::stof(row[6])};
-	    	    std::cout<< row[0] << std::endl;
 	    	    radar.add_plane(ID, Velocity, Position);
 	   }
 

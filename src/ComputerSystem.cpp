@@ -9,6 +9,7 @@
 #include <cstring>
 #include <cmath>
 #include <errno.h>
+#include "Logger.h"
 
 ComputerSystem::ComputerSystem() : running_(false), lookaheadTime_(3) { // Default 'n' is 180 seconds
     pthread_mutex_init(&data_mutex_, nullptr);
@@ -16,19 +17,19 @@ ComputerSystem::ComputerSystem() : running_(false), lookaheadTime_(3) { // Defau
     // Create channels for receiving messages
     radar_chid_ = ChannelCreate(0);
     if (radar_chid_ == -1) {
-        perror("ComputerSystem: Failed to create radar channel");
+      LOG_ERROR("ComputerSystem", "Failed to create radar channel");
         exit(EXIT_FAILURE);
     }
 
     operator_chid_ = ChannelCreate(0);
     if (operator_chid_ == -1) {
-        perror("ComputerSystem: Failed to create operator channel");
+      LOG_ERROR("ComputerSystem", "Failed to create operator channel");
         exit(EXIT_FAILURE);
     }
 
     dataDisplay_chid_ = ChannelCreate(0);
     if (dataDisplay_chid_ == -1) {
-    	perror("ComputerSystem: Failed to create DataDisplay channel");
+      LOG_ERROR("ComputerSystem", "Failed to create DataDisplay channel");
         exit(EXIT_FAILURE);
     }
 }
@@ -42,37 +43,35 @@ void ComputerSystem::start() {
     running_ = true;
     int ret = pthread_create(&thread_, nullptr, ComputerSystem::threadFunc, this);
     if (ret != 0) {
-        perror("ComputerSystem: Failed to create main thread");
-        exit(EXIT_FAILURE);
-    } else {
-        std::cout << "ComputerSystem main thread started.\n";
+      LOG_ERROR("ComputerSystem", "Failed to create main thread");
+      exit(EXIT_FAILURE);
     }
+    LOG_INFO("ComputerSystem", "Main thread started");
 
     // Start radar thread
     ret = pthread_create(&radar_thread_, nullptr, ComputerSystem::radarThreadFunc, this);
     if (ret != 0) {
-        perror("ComputerSystem: Failed to create radar thread");
+        LOG_ERROR("ComputerSystem", "Failed to create radar thread");
         exit(EXIT_FAILURE);
-    } else {
-        std::cout << "ComputerSystem radar thread started.\n";
     }
+    LOG_INFO("ComputerSystem", "Radar thread started");
 
     // Start operator thread
     ret = pthread_create(&operator_thread_, nullptr, ComputerSystem::operatorThreadFunc, this);
     if (ret != 0) {
-        perror("ComputerSystem: Failed to create operator thread");
+        LOG_ERROR("ComputerSystem", "Failed to create operator thread");
         exit(EXIT_FAILURE);
-    } else {
-        std::cout << "ComputerSystem operator thread started.\n";
     }
+    LOG_INFO("ComputerSystem", "Operator thread started");
+
 
     // Start DataDisplay thread
     ret = pthread_create(&dataDisplay_thread_, nullptr, ComputerSystem::dataDisplayThreadFunc, this);
     if (ret != 0) {
-    	perror("ComputerSystem: Failed to create DataDisplay thread");
+        LOG_ERROR("ComputerSystem", "Failed to create DataDisplay thread");
         exit(EXIT_FAILURE);
     } else {
-    	std::cout << "ComputerSystem DataDisplay thread started.\n";
+        LOG_INFO("ComputerSystem", "DataDisplay thread started");
     }
 }
 
@@ -159,7 +158,7 @@ void ComputerSystem::radarLoop() {
             if (errno == EINTR) {
                 continue;
             } else {
-                perror("ComputerSystem: MsgReceive from Radar failed");
+                LOG_ERROR("ComputerSystem", "MsgReceive from Radar failed");
                 break;
             }
         }
@@ -175,12 +174,6 @@ void ComputerSystem::radarLoop() {
             pthread_mutex_unlock(&data_mutex_);
             MsgReply(rcvid, EOK, nullptr, 0);
 
-//            // Add logging
-//            std::cout << "ComputerSystem: Received " << radarMsg->numAircraft << " aircraft from Radar.\n";
-//            for (int i = 0; i < radarMsg->numAircraft; ++i) {
-//                PlaneState& state = radarMsg->aircraftData[i];
-//                std::cout << "ComputerSystem: Aircraft " << state.id << " Position (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n";
-//            }
         }
     }
 }
@@ -195,7 +188,7 @@ void ComputerSystem::operatorLoop() {
             if (errno == EINTR) {
                 continue;
             } else {
-                perror("ComputerSystem: MsgReceive from OperatorConsole failed");
+                LOG_ERROR("ComputerSystem", "MsgReceive from OperatorConsole failed");
                 break;
             }
         }
@@ -213,7 +206,7 @@ void ComputerSystem::operatorLoop() {
                 pthread_mutex_lock(&data_mutex_);
                 lookaheadTime_ = opCmdMsg->command.lookaheadTime;
                 pthread_mutex_unlock(&data_mutex_);
-                std::cout << "ComputerSystem: Lookahead time set to " << lookaheadTime_ << " seconds.\n";
+                LOG_INFO("ComputerSystem", "Lookahead time set to " + std::to_string(lookaheadTime_) + " seconds");
             }
             MsgReply(rcvid, EOK, nullptr, 0);
         }
@@ -258,13 +251,13 @@ void ComputerSystem::checkForViolations() {
                 message += aircraftStatesCopy[i].id;
                 message += " and ";
                 message += aircraftStatesCopy[j].id;
-                emitAlert(message);
-
+                LOG_WARNING("ComputerSystem", message);
                 Vector velocity = aircraftStatesCopy[i].velocity;
                 velocity.z += 1;
                 std::lock_guard<std::mutex> lock(mtx);
                 sendCourseCorrection(aircraftStatesCopy[i].id, velocity,aircraftStatesCopy[i].coid);
             }
+
         }
     }
 }
@@ -277,7 +270,7 @@ void ComputerSystem::dataDisplayLoop() {
             if (errno == EINTR) {
                 continue;
             } else {
-                perror("ComputerSystem: MsgReceive from DataDisplay failed");
+                LOG_ERROR("ComputerSystem", "MsgReceive from DataDisplay failed");
                 break;
             }
         }
@@ -309,20 +302,12 @@ void ComputerSystem::dataDisplayLoop() {
             size_t replySize = sizeof(int) + replyMsg.numAircraft * sizeof(PlaneState);
             int status = MsgReply(rcvid, EOK, &replyMsg, replySize);
             if (status == -1) {
-                perror("ComputerSystem: Failed to send data to DataDisplay");
+                LOG_ERROR("ComputerSystem", "Failed to send data to DataDisplay");
             }
         }
     }
 }
 
-
-
-
-
-void ComputerSystem::emitAlert(const std::string& message) {
-    // Emit an alert (e.g., print to console)
-    std::cout << "ALERT: " << message << std::endl;
-}
 
 int ComputerSystem::getRadarChannelId() const {
     return radar_chid_;
@@ -343,10 +328,9 @@ void ComputerSystem::sendCourseCorrection(const std::string& planeId, const Vect
 
 	bool status = MsgSend(coid, &msg, sizeof(msg), nullptr, 0);
 	if (status == -1){
-		perror("ComputerSystem: Failed to send Course Correction to Radar");
-	}else{
-		std::cout << "ComputerSystem: Sent Course Correction to plane" << planeId <<"\n";
+        LOG_ERROR("ComputerSystem", "Failed to send Course Correction to Radar");
 	}
+    LOG_WARNING("ComputerSystem", "Sent Course Correction to plane" + planeId);
 }
 
 

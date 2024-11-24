@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <cstring>
 #include <algorithm> // For std::find
-
+#include "Logger.h"
 DataDisplay::DataDisplay(int computerSystemCoid)
     : computerSystemCoid_(computerSystemCoid), running_(false) {}
 
@@ -19,11 +19,10 @@ void DataDisplay::start() {
     running_ = true;
     int ret = pthread_create(&thread_, nullptr, DataDisplay::threadFunc, this);
     if (ret != 0) {
-        perror("DataDisplay: Failed to create thread");
+        LOG_ERROR("DataDisplay", "Failed to create thread");
         exit(EXIT_FAILURE);
-    } else {
-        std::cout << "DataDisplay thread started.\n";
     }
+    LOG_INFO("DataDisplay", "DataDisplay thread started.");
 }
 
 void DataDisplay::stop() {
@@ -53,18 +52,17 @@ void DataDisplay::requestDataFromComputerSystem() {
 
     // Prepare to receive the reply
     ComputerToDataDisplayMsg replyMsg;
-
-    std::cout << "DataDisplay: Requesting data from ComputerSystem.\n";
+    LOG_INFO("DataDisplay", "Requesting data from ComputerSystem");
 
     int status = MsgSend(computerSystemCoid_, &requestMsg, sizeof(requestMsg), &replyMsg, sizeof(replyMsg));
     if (status == -1) {
-        perror("DataDisplay: Failed to request data from ComputerSystem");
+      LOG_ERROR("DataDisplay", "Failed to request data from ComputerSystem");
     } else {
         // status will be EOK (0)
         int numAircraft = replyMsg.numAircraft;
         std::lock_guard<std::mutex> lock(mtx);
         aircraftStates_.assign(replyMsg.aircraftData, replyMsg.aircraftData + numAircraft);
-        std::cout << "DataDisplay: Received " << numAircraft << " aircraft from ComputerSystem.\n";
+        LOG_INFO("DataDisplay", "Received " + std::to_string(numAircraft) + " aircraft from ComputerSystem.");
     }
 }
 
@@ -75,7 +73,7 @@ void DataDisplay::updateDisplay() {
 
     // Check if we have any aircraft data
     if (aircraftStates_.empty()) {
-    	std::cout << "DataDisplay: No aircraft data to display.\n";
+        LOG_INFO("DataDisplay", "No aircraft data to display.");
         return;
     }
 
@@ -113,7 +111,7 @@ void DataDisplay::updateDisplay() {
     }
 
     // Display the grid
-    std::cout << "\nDataDisplay: Current Aircraft Positions:\n";
+    LOG_INFO("DataDisplay", "Current Aircraft Positions:");
     for (int y = GRID_HEIGHT - 1; y >= 0; --y) { // y-axis goes from bottom to top
         std::cout << std::setw(2) << y << " | ";
         for (int x = 0; x < GRID_WIDTH; ++x) {

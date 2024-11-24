@@ -6,6 +6,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
+#include "Logger.h"
 
 Radar::Radar(int computerSystemCoid)
     : running_(false), computerSystemCoid_(computerSystemCoid) {
@@ -70,7 +71,7 @@ int Radar::add_plane(std::string id, Vector position, Vector speed) {
     // Connect to the Plane's channel
     int coid = ConnectAttach(ND_LOCAL_NODE, 0, plane->getChannelId(), _NTO_SIDE_CHANNEL, 0);
     if (coid == -1) {
-        perror("Radar: Failed to connect to Plane channel");
+        LOG_ERROR("Radar", "Failed to connect to Plane channel");
         plane->stop();
         delete plane;
         return -1;
@@ -99,7 +100,7 @@ int Radar::remove_plane(std::string id) {
         });
 
     if (connIt == planeConnections_.end()) {
-        std::cerr << "[Radar]: Plane " << id << " not found\n";
+        LOG_ERROR("Radar", "Plane " + id + " not found");
         return -1;
     }
 
@@ -114,7 +115,7 @@ int Radar::remove_plane(std::string id) {
         });
 
     if (planeIt == planes_.end()) {
-        std::cerr << "[Radar]: Plane " << id << " not found\n";
+        LOG_ERROR("Radar", "Plane " + id + " not found");
         return -1;
     }
 
@@ -141,9 +142,10 @@ void Radar::update_planes() {
     for (auto& conn : planeConnections_) {
         PlaneResponseMsg responseMsg;
         if(!query_plane(conn, responseMsg)) {
-            std::cerr << "Radar: Failed to query plane " << conn.plane->get_id() << "\n";
+            LOG_ERROR("Radar", "Failed to query plane " + conn.plane->get_id());
             continue;
         }
+
             PlaneState state;
             // Copy ID using strncpy
             strncpy(state.id, responseMsg.data.id, sizeof(state.id));
@@ -153,23 +155,19 @@ void Radar::update_planes() {
             state.velocity = Vector(responseMsg.data.speedX, responseMsg.data.speedY, responseMsg.data.speedZ);
 //             check if plane is in bounds
             if (isInBounds(state.position) == -1) {
-                std::cerr << "Radar: Plane " << state.id << " is out of bounds\n";
+                LOG_WARNING("Radar", "Plane " + std::string(state.id) + " is out of bounds");
                 planesToRemove.push_back(state.id);
                 continue;
             }
+
             state.coid = conn.coid;
-             aircraftData.push_back(state);
-
-
-
-            // Display updates
-//            std::cout << "Radar received data from Plane " << state.id << ":\n"
-//                      << "  Position: (" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")\n"
-//                      << "  Velocity: (" << state.velocity.x << ", " << state.velocity.y << ", " << state.velocity.z << ")\n";
+            aircraftData.push_back(state);
+//        LOG_INFO("Radar", "Plane " + state.id + " is at position (" + std::to_string(state.position.x) + ", " +
+//                 std::to_string(state.position.y) + ", " + std::to_string(state.position.z) + ")");
        }
 
 
-    }
+
 
     // Send data to ComputerSystem
     RadarToComputerMsg radarMsg;
@@ -180,8 +178,9 @@ void Radar::update_planes() {
 
     int status = MsgSend(computerSystemCoid_, &radarMsg, sizeof(radarMsg), nullptr, 0);
     if (status == -1) {
-        perror("Radar: Failed to send data to ComputerSystem");
+        LOG_ERROR("Radar", "Failed to send data to ComputerSystem: " + std::string(strerror(errno)));
     }
+    LOG_INFO("Radar", "Sent " + std::to_string(radarMsg.numAircraft) + " aircraft to ComputerSystem");
 
     for (const auto& id : planesToRemove) {
       remove_plane(id);
@@ -202,7 +201,7 @@ bool Radar::query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseM
     RadarQueryMsg queryMsg;
     int status = MsgSend(conn.coid, &queryMsg, sizeof(queryMsg), &responseMsg, sizeof(responseMsg));
     if (status == -1) {
-        std::cerr << "Radar: MsgSend to Plane " << conn.plane->get_id() << " failed: " << strerror(errno) << "\n";
+        LOG_ERROR("Radar", "MsgSend to Plane " + conn.plane->get_id() + " failed: " + strerror(errno));
         return false;
     }
     return true;
