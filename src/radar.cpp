@@ -161,7 +161,7 @@ void Radar::update_planes() {
                 continue;
             }
 
-            state.coid = conn.coid;
+            state.coid_comp = conn.coid_comp;
             aircraftData.push_back(state);
 //        LOG_INFO("Radar", "Plane " + state.id + " is at position (" + std::to_string(state.position.x) + ", " +
 //                 std::to_string(state.position.y) + ", " + std::to_string(state.position.z) + ")");

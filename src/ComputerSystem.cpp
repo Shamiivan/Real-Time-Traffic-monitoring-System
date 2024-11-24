@@ -253,7 +253,7 @@ void ComputerSystem::checkForViolations() {
                 message += aircraftStatesCopy[j].id;
                 LOG_WARNING("ComputerSystem", message);
                 Vector velocity = aircraftStatesCopy[i].velocity;
-                velocity.z += 1;
+                velocity.z += 1000;
                 std::lock_guard<std::mutex> lock(mtx);
                 sendCourseCorrection(aircraftStatesCopy[i].id, velocity,aircraftStatesCopy[i].coid_comp);
             }
@@ -325,6 +325,7 @@ void ComputerSystem::sendCourseCorrection(const std::string& planeId, const Vect
 	courseCorrectionMsg msg;
 	msg.id = planeId;
 	msg.newVelocity = velocity;
+
 	int con = ConnectAttach(ND_LOCAL_NODE, 0, coid, _NTO_SIDE_CHANNEL, 0);
 	bool status = MsgSend(con, &msg, sizeof(msg), nullptr, 0);
 	if (status == -1){

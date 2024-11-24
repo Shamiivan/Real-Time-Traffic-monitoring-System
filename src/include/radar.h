@@ -12,7 +12,7 @@
 struct PlaneConnection {
    Plane* plane;
    int coid; // Connection ID to the Plane's channel
-   int coid_comp;
+   int coid_comp; //connection ID for computer to plane's computer channel
 };
 
 struct Bounds {

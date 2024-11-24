@@ -14,12 +14,12 @@ Plane::Plane() : running_(false), dt(1.0) {
     pthread_mutex_init(&mutex_, nullptr);
     chid_ = ChannelCreate(0);
     if (chid_ == -1) {
-      LOG_ERROR("Plane", "Failed to create plane");
+      LOG_ERROR("Plane", "Failed to create channel for the plane");
         exit(EXIT_FAILURE);
     }
     chid_comp_ = ChannelCreate(0);
         if (chid_comp_ == -1) {
-          LOG_ERROR("Plane", "Failed to create Channel Computer System");
+            LOG_ERROR("Plane", "Failed to create channel");
             exit(EXIT_FAILURE);
         }
 }
@@ -35,8 +35,8 @@ Plane::Plane(
         exit(EXIT_FAILURE);
     }
 
-    chid1_ = ChannelCreate(0);
-    if (chid_ == -1) {
+    chid_comp_ = ChannelCreate(0);
+    if (chid_comp_ == -1) {
         LOG_ERROR("Plane", "Failed to create channel");
         exit(EXIT_FAILURE);
     }
@@ -74,7 +74,7 @@ void Plane::start() {
                 + " message thread id: " + std::to_string(msg_thread_)
                 + " course correction thread id: " + std::to_string(course_currect_thread_)
                 + " channel id: " + std::to_string(chid_)
-                + " channel id1: " + std::to_string(chid1_));
+                + " channel id1: " + std::to_string(chid_comp_));
 
 }
 Vector Plane::get_pos() const {
@@ -199,15 +199,13 @@ void Plane::courseCorrectLoop() {
 			if (errno == EINTR) {
 				continue;
 		    } else {
-                LOG_ERROR("Plane", "Failed to receive course correction id :" + id);
+		    	perror("Plane: Failed to receive course correction");
 		        break;
 		    }
 		}
-        LOG_INFO("Plane", "Plane " + id + " Received Course Correction alert."
-                         + " New Velocity: (" + std::to_string(msg.newVelocity.x) + ", "
-                         + std::to_string(msg.newVelocity.y) + ", "
-                         + std::to_string(msg.newVelocity.z) + ")");
-
-        set_velocity(msg.newVelocity);
+		else if (rcvid > 0) {
+			std::cout << "Plane " << id << " Received Course Correction alert.\n";
+			set_velocity(msg.newVelocity);
+		}
 	}
 }
