@@ -36,6 +36,8 @@ private:
     void messageLoop();
     void courseCorrectLoop();
 
+private:
+
     std::string id;
     Vector position;
     Vector velocity;

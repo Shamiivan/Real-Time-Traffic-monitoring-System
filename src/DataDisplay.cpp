@@ -8,6 +8,7 @@
 #include <cstring>
 #include <algorithm> // For std::find
 #include "Logger.h"
+#include "radar.h"
 DataDisplay::DataDisplay(int computerSystemCoid)
     : computerSystemCoid_(computerSystemCoid), running_(false) {}
 
@@ -42,7 +43,7 @@ void DataDisplay::run() {
     while (running_) {
         requestDataFromComputerSystem();
         updateDisplay();
-        sleep(2); // Update every 5 seconds
+        sleep(5); // Update every 5 seconds
     }
 }
 
@@ -67,14 +68,6 @@ void DataDisplay::requestDataFromComputerSystem() {
 }
 
 
-// DataDisplay.cpp
-#include "DataDisplay.h"
-#include "messages.h"
-#include <sys/neutrino.h>
-#include <unistd.h>
-#include <iostream>
-#include <iomanip>
-#include "Logger.h"
 
 void DataDisplay::updateDisplay() {
     std::lock_guard<std::mutex> lock(mtx);
@@ -85,40 +78,40 @@ void DataDisplay::updateDisplay() {
         return;
     }
 
-    // Constants for grid size
+    // Constants for grid size and bounds
     const int GRID_WIDTH = 50;
-     const int GRID_HEIGHT = 25;
-     const double MAX_COORD = 100000.0;
+    const int GRID_HEIGHT = 25;
+    const double MAX_X = 100000;
+    const double MAX_Y = 100000;
 
     // Create grid with empty spaces
     std::vector<std::vector<char>> grid(GRID_HEIGHT, std::vector<char>(GRID_WIDTH, '.'));
 
-    // coordinates to scale properly
-    double maxX = 100000.0;
-    double maxY = 100000.0;
-
-    // Display grid header
     LOG_INFO("DataDisplay", "Displaying aircraft data on grid");
+
     // Plot each aircraft on grid
     for (const auto& aircraft : aircraftStates_) {
         // Scale coordinates to grid size
-        int gridX = static_cast<int>((aircraft.position.x / maxX) * (GRID_WIDTH - 1));
-        int gridY = static_cast<int>((aircraft.position.y / maxY) * (GRID_HEIGHT - 1));
+        // Flip Y coordinate since grid origin is top-left but aircraft coordinates have origin at bottom-left
+        int gridX = static_cast<int>((aircraft.position.x / MAX_X) * (GRID_WIDTH - 1));
+        int gridY = GRID_HEIGHT - 1 - static_cast<int>((aircraft.position.y / MAX_Y) * (GRID_HEIGHT - 1));
 
         // Ensure coordinates are within bounds
         gridX = std::min(std::max(gridX, 0), GRID_WIDTH - 1);
         gridY = std::min(std::max(gridY, 0), GRID_HEIGHT - 1);
+
+        // Select symbol based on altitude
         char symbol;
         double altitude = aircraft.position.z;
         if (altitude < 5000) {
-            symbol = 'v';  // or 'L' for Low
+            symbol = 'v';  // Low altitude
         } else if (altitude < 10000) {
-            symbol = '#';  // or 'M' for Medium
+            symbol = '#';  // Medium altitude
         } else {
-            symbol = '^';  // or 'H' for High
+            symbol = '^';  // High altitude
         }
 
-        // Place aircraft on grid with its ID
+        // Place aircraft on grid
         grid[gridY][gridX] = symbol;
 
         // Display aircraft info
@@ -126,26 +119,24 @@ void DataDisplay::updateDisplay() {
                  std::to_string(aircraft.position.x) + ", " +
                  std::to_string(aircraft.position.y) + ", " +
                  std::to_string(aircraft.position.z) + ")");
-
     }
 
-    // Display grid with border
-    std::cout << "+";
-    for (int x = 0; x < GRID_WIDTH; x++) std::cout << "+";
-    std::cout << "+\n";
+    // Build grid visualization as a string
+       std::stringstream gridDisplay;
+       gridDisplay << "\nCurrent Airspace Status:\n";
+       gridDisplay << std::string(GRID_WIDTH + 2, '+') << '\n';
 
-    for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
-        std::cout << "+";
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            std::cout << grid[y][x];
-        }
-        std::cout << "+\n";
-    }
+       for (int y = 0; y < GRID_HEIGHT; y++) {
+           gridDisplay << '+';
+           for (int x = 0; x < GRID_WIDTH; x++) {
+               gridDisplay << grid[y][x];
+           }
+           gridDisplay << "+\n";
+       }
 
-    std::cout << "+";
-    for (int x = 0; x < GRID_WIDTH; x++) std::cout << "+";
-    std::cout << "+\n";
-
+       gridDisplay << std::string(GRID_WIDTH + 2, '+') << '\n';
+       gridDisplay << "Legend: v=Low altitude  #=Medium altitude  ^=High altitude\n";
+       LOG_WARNING("DataDisplay", gridDisplay.str());
 }
 
 void DataDisplay::scalePositionsToGrid(int& gridX, int& gridY, double planeX, double planeY, int gridWidth, int gridHeight, double maxCoord) {

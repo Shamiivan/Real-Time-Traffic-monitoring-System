@@ -19,7 +19,7 @@ void read_planes(Radar&);
 
 int main() {
 	auto & logger = Logger::getInstance();
-
+	logger.enable(Logger::Level::DEBUG);
 	std::string tag = "Main";
 	logger.disable(Logger::Level::INFO);
 	LOG_INFO("Main", "System Started");
@@ -51,11 +51,6 @@ int main() {
         DataDisplay dataDisplay(computerSystemDataDisplayCoid);
         dataDisplay.start();
 
-
-    // Uncomment if needed
-    // radar.add_plane("#3", Vector(13, 14, 15), Vector(0, 0, 100));
-    // radar.add_plane("#4", Vector(19, 20, 21), Vector(-100, -100, -100));
-
         while(true){};
 
 //    // Stop all systems
@@ -75,8 +70,8 @@ int main() {
 //read and create planes from planes.txt file
 //IDs are hardcoded for now, they are in the .txt file.
 void read_planes(Radar& radar) {
-	std::string filePath = "./planes.txt";
-//	std::string filePath = "./planes_10.txt";
+//	std::string filePath = "./planes.txt";
+	std::string filePath = "./planes_10.txt";
 	std::ifstream plane_file;
 	plane_file.open(filePath);
 	Vector Position;
@@ -110,7 +105,7 @@ void read_planes(Radar& radar) {
 	    	    ID = row[0];
 	    	    Position = {std::stof(row[1]), std::stof(row[2]), std::stof(row[3])};
 	    	    Velocity = {std::stof(row[4]), std::stof(row[5]), std::stof(row[6])};
-	    	    radar.add_plane(ID, Velocity, Position);
+	    	    radar.add_plane(ID,Position, Velocity);
 	   }
 
 	    plane_file.close();

@@ -97,12 +97,14 @@ void Plane::set_pos(Vector position) {
 }
 
 Vector Plane::update_position() {//test
+  {
     std::lock_guard<std::mutex> lock(mtx);
     position.x += velocity.x * dt;
     position.y += velocity.y * dt;
     position.z += velocity.z * dt;
-//    std::cout << "Plane " << id << " updated position to (" << position.x << ", "
-//              << position.y << ", " << position.z << ")"<< std::endl;
+  }
+    LOG_INFO("Plane", "Plane " + id + " updated position to (" + std::to_string(position.x) + ", "
+             + std::to_string(position.y) + ", " + std::to_string(position.z) + ")");
     return position;
 }
 

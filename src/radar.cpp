@@ -58,8 +58,8 @@ void Radar::run() {
     }
 }
 
-int Radar::add_plane(std::string id, Vector position, Vector speed) {
-    Plane* plane = new Plane(id, position, speed);
+int Radar::add_plane(std::string id, Vector position, Vector velocity) {
+    Plane* plane = new Plane(id, position, velocity);
     plane->start();
 
     // Connect to the Plane's channel
