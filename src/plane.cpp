@@ -204,6 +204,8 @@ void Plane::courseCorrectLoop() {
 		    }
 		}
 		else if (rcvid > 0) {
+			 MsgReply(rcvid, EOK, nullptr, 0);
+			 LOG_WARNING("Plane", "" + id + "Received Course Correction alert");
 			std::cout << "Plane " << id << " Received Course Correction alert.\n";
 			set_velocity(msg.newVelocity);
 		}
