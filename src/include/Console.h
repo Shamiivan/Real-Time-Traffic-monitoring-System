@@ -3,12 +3,6 @@
 #include <iostream>
 #include <Config.h>
 
-enum class ConsoleCommand {
-  DIPLAY_PLANE_DATA = 1,
-  UPDATE_PLANE_VELOCITY = 2,
-  UPDATE_PLANE_POSITION = 3,
-};
-
 class Console {
   public :
     Console();
@@ -19,7 +13,10 @@ class Console {
     void stop();
 
     Status processUserInput();
+    Status updatePlaneVelocity();
+    Status listPlanes();
     void displayHelp();
+
    private:
      static void *threadFunc(void *arg); //
      void run();

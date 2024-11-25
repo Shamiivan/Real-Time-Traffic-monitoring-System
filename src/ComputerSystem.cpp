@@ -185,11 +185,11 @@ void ComputerSystem::operatorLoop() {
             OperatorCommandMsg* msg = (OperatorCommandMsg*)&msg_buffer;
             // Process operator command
             switch(msg->type) {
-                case OperatorCommandMsg::GET_PLANE_DATA:
+                case ConsoleCommand::LIST_PLANES:
 //                    sendPlaneDataToConsole(opCmdMsg->planeId);
                     LOG_WARNING("ComputerSystem", "Operator command to get plane data not implemented");
                     break;
-                case OperatorCommandMsg::UPDATE_PLANE_VELOCITY:
+                case ConsoleCommand::UPDATE_PLANE_VELOCITY:
                     // Update plane velocity
                     pthread_mutex_lock(&data_mutex_);
                       for (auto& plane : aircraftStates_) {
@@ -203,7 +203,7 @@ void ComputerSystem::operatorLoop() {
 
                     LOG_INFO("ComputerSystem", std::string("Updated velocity for plane ") + msg->planeId);
                     break;
-                case OperatorCommandMsg::UPDATE_PLANE_POSITION:
+                case ConsoleCommand::UPDATE_PLANE_POSITION:
                     // Update plane position
                     LOG_WARNING("ComputerSystem", "Operator command to update plane position not implemented");
                     break;

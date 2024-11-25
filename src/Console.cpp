@@ -60,23 +60,92 @@ Status Console::processUserInput(){
     switch(command){
         case 'h':
             displayHelp();
+        	return Status::OK;
             break;
+        case '0':
+        	return listPlanes();
         case '1':
             break;
         case '2':
+            return updatePlaneVelocity();
             break;
         case '3':
+        	return Status::OK;
             break;
         case '4':
             running_ = false;
+        	return Status::OK;
             break;
         default:
             LOG_WARNING("Console", "Invalid command");
             break;
-	return Status::OK;
     };
+	return Status::OK;
 }
 
+Status Console::listPlanes() {
+    OperatorCommandMsg msg;
+    msg.type = ConsoleCommand::LIST_PLANES;
+
+    // Buffer to receive plane list
+    PlaneListMsg planesList;
+    int status = MsgSend(computerSystemCoid_, &msg, sizeof(msg), &planesList, sizeof(planesList));
+    if (status != EOK) {
+        LOG_ERROR("Console", "Failed to get plane data");
+        return Status::ERROR;
+    }
+
+    // Create formatted output
+    std::stringstream ss;
+    ss << "\nCurrent Planes in System:\n";
+    ss << "ID     | Position (x,y,z)        | Velocity (x,y,z)\n";
+    ss << "-----------------------------------------------------\n";
+
+    for(int i = 0; i < planesList.numPlanes; i++) {
+        ss << planesList.planes[i].id << " | ("
+           << planesList.planes[i].position.x << ","
+           << planesList.planes[i].position.y << ","
+           << planesList.planes[i].position.z << ") | ("
+           << planesList.planes[i].velocity.x << ","
+           << planesList.planes[i].velocity.y << ","
+           << planesList.planes[i].velocity.z << ")\n";
+    }
+
+    LOG_WARNING("Console", ss.str());
+    return Status::OK;
+}
+Status Console::updatePlaneVelocity() {
+    std::string planeId;
+    double x, y, z;
+
+    LOG_WARNING("Console", "Enter plane ID: ");
+    std::getline(std::cin, planeId);
+
+    LOG_WARNING("Console", "Enter new velocity (x y z): ");
+    std::string velocityInput;
+    std::getline(std::cin, velocityInput);
+
+    std::stringstream ss(velocityInput);
+    if (!(ss >> x >> y >> z)) {
+        LOG_ERROR("Console", "Invalid velocity format. Use: x y z");
+        return Status::ERROR;
+    }
+
+    OperatorCommandMsg msg;
+    msg.type = ConsoleCommand::UPDATE_PLANE_VELOCITY;
+    strncpy(msg.planeId, planeId.c_str(), sizeof(msg.planeId) - 1);
+    msg.planeId[sizeof(msg.planeId) - 1] = '\0';
+    msg.velocity = Vector(x, y, z);
+
+    int status = MsgSend(computerSystemCoid_, &msg, sizeof(msg), nullptr, 0);
+    if (status != EOK) {
+        LOG_ERROR("Console", "Failed to send velocity update command");
+        return Status::ERROR;
+    }
+
+    LOG_INFO("Console", "Velocity update command sent");
+    return Status::OK;
+}
 
 void Console::displayHelp() {
     LOG_INFO("Console", "Displaying help menu");
