@@ -13,6 +13,7 @@
 #include <fstream>
 #include <sstream>
 #include "Logger.h"
+#include "Console.h"
 
 
 void read_planes(Radar&);
@@ -31,20 +32,32 @@ int main() {
     // Get the channel IDs for Radar and OperatorConsole
     int computerSystemRadarCoid = ConnectAttach(ND_LOCAL_NODE, 0, computerSystem.getRadarChannelId(), _NTO_SIDE_CHANNEL, 0);
     if (computerSystemRadarCoid == -1) {
-        perror("Failed to connect to ComputerSystem radar channel");
+        LOG_ERROR("Main", "Failed to connect to ComputerSystem Radar channel");
         return -1;
     }
 
     int computerSystemDataDisplayCoid = ConnectAttach(ND_LOCAL_NODE, 0, computerSystem.getDataDisplayChannelId(), _NTO_SIDE_CHANNEL, 0);
     if (computerSystemDataDisplayCoid == -1) {
-    	perror("Failed to connect to ComputerSystem DataDisplay channel");
+         LOG_ERROR("Main", "Failed to connect to ComputerSystem DataDisplay channel");
         return -1;
     }
+    int computerSystemOperatorCoid = ConnectAttach(ND_LOCAL_NODE, 0, computerSystem.getOperatorChannelId(), _NTO_SIDE_CHANNEL, 0);
+    if (computerSystemOperatorCoid == -1) {
+      LOG_ERROR("Main", "Failed to connect to ComputerSystem Operator channel");
+        return -1;
+    }
+
+    Console console(computerSystemOperatorCoid);
+    console.start();
+
+
+
+
+
 
     // Create Radar and connect to ComputerSystem
     Radar radar(computerSystemRadarCoid);
     read_planes(radar);
-
     radar.start();
 
     // Create DataDisplay and connect to ComputerSystem

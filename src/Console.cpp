@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cstring>
 #include "Logger.h"
+#include <unistd.h>
 
 
 Console::Console(int computerSystemCoid)
@@ -38,17 +39,45 @@ void* Console::threadFunc(void* arg) {
 }
 
 void Console::run() {
+    displayHelp();
     while (running_) {
-        ConsoleCommand command = getCommand();
-        if (command == ConsoleCommand::DIPLAY_PLANE_DATA){
-          LOG_WARNING("Console", "Please  enter the plane id");
-        }
+        Status status = processUserInput();
+          if(status ==Status::ERROR){
+              LOG_ERROR("Console", "Failed to process user input");
+          }
+          usleep(100000); // 100 ms
     }
 }
 
-ConsoleCommand Console::getCommand(){
-	return ConsoleCommand::DIPLAY_PLANE_DATA;
-};
+Status Console::processUserInput(){
+  std::string input;
+    LOG_WARNING("Console", "Enter a command (h for help : ");
+    std::getline(std::cin, input);
+    if(input.empty()){
+        return Status::ERROR;
+    }
+    char command = input[0];
+    switch(command){
+        case 'h':
+            displayHelp();
+            break;
+        case '1':
+            break;
+        case '2':
+            break;
+        case '3':
+            break;
+        case '4':
+            running_ = false;
+            break;
+        default:
+            LOG_WARNING("Console", "Invalid command");
+            break;
+	return Status::OK;
+    };
+}
+
+
 void Console::displayHelp() {
     LOG_INFO("Console", "Displaying help menu");
     std::stringstream helpMenu;

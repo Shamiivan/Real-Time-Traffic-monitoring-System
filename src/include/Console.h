@@ -1,6 +1,7 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 #include <iostream>
+#include <Config.h>
 
 enum class ConsoleCommand {
   DIPLAY_PLANE_DATA = 1,
@@ -17,7 +18,7 @@ class Console {
     void start();
     void stop();
 
-    ConsoleCommand getCommand();
+    Status processUserInput();
     void displayHelp();
    private:
      static void *threadFunc(void *arg); //
