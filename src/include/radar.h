@@ -12,6 +12,7 @@
 struct PlaneConnection {
    Plane* plane;
    int coid; // Connection ID to the Plane's channel
+   int coid_comp; //connection ID for computer to plane's computer channel
 };
 
 struct Bounds {
@@ -20,7 +21,7 @@ struct Bounds {
         static constexpr double MIN_Y = 0.0;
         static constexpr double MAX_Y = 100000.0;
         static constexpr double MIN_Z = 0.0;
-        static constexpr double MAX_Z = 20000.0;
+        static constexpr double MAX_Z = 25000.0;
 
         bool contains(const Vector& position) const {
             return position.x >= MIN_X && position.x <= MAX_X &&
@@ -53,7 +54,6 @@ private :
     bool running_;
     std::mutex mtx;
     std::mutex planeMtx;
-
     int computerSystemCoid_;
     const Bounds radarBounds{};  // Using default initialization with constants
 };

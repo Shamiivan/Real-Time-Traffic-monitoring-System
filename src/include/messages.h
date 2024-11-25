@@ -29,13 +29,14 @@ struct PlaneState {
     char id[16]; // Fixed-size character array
     Vector position;
     Vector velocity;
-    int coid;
+    int coid_comp;
 };
 
 // Message from Radar to ComputerSystem
 struct RadarToComputerMsg {
     int numAircraft;
     PlaneState aircraftData[100]; // Adjust size as needed
+    int coid_comp;
 };
 
 // Message from ComputerSystem to DataDisplay
@@ -62,12 +63,6 @@ struct OperatorCommand {
 // Message from OperatorConsole to ComputerSystem
 struct OperatorCommandMsg {
     OperatorCommand command;
-};
-
-// Message from ComputerSystem to CommunicationSystem
-struct CommunicationCommandMsg {
-    char aircraftId[16];
-    double speedX, speedY, speedZ;
 };
 
 struct DataDisplayRequestMsg {

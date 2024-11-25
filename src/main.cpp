@@ -21,7 +21,7 @@ int main() {
 	auto & logger = Logger::getInstance();
 	logger.enable(Logger::Level::DEBUG);
 	std::string tag = "Main";
-//	logger.disable(Logger::Level::INFO);
+	logger.disable(Logger::Level::INFO);
 	LOG_INFO("Main", "System Started");
 
     // Create ComputerSystem
