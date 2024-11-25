@@ -85,33 +85,15 @@ void ComputerSystem::stop() {
         pthread_getschedparam(pthread_self(), &policy, &param);
         int priority = param.sched_priority;
 
-        // Unblock the threads by sending pulses to the channels
-        int radar_coid = ConnectAttach(0, 0, radar_chid_, _NTO_SIDE_CHANNEL, 0);
-        if (radar_coid != -1) {
-            MsgSendPulse(radar_coid, priority, PULSE_CODE_EXIT, 0);
-            ConnectDetach(radar_coid);
-        }
-
-        int operator_coid = ConnectAttach(0, 0, operator_chid_, _NTO_SIDE_CHANNEL, 0);
-        if (operator_coid != -1) {
-            MsgSendPulse(operator_coid, priority, PULSE_CODE_EXIT, 0);
-            ConnectDetach(operator_coid);
-        }
-
-        int dataDisplay_coid = ConnectAttach(0, 0, dataDisplay_chid_, _NTO_SIDE_CHANNEL, 0);
-        if (dataDisplay_coid != -1) {
-        	MsgSendPulse(dataDisplay_coid, priority, PULSE_CODE_EXIT, 0);
-            ConnectDetach(dataDisplay_coid);
-        }
+        //destroy channels
+        ChannelDestroy(radar_chid_);
+        ChannelDestroy(operator_chid_);
+        ChannelDestroy(dataDisplay_chid_);
 
         pthread_join(thread_, nullptr);
         pthread_join(radar_thread_, nullptr);
         pthread_join(operator_thread_, nullptr);
         pthread_join(dataDisplay_thread_, nullptr);
-
-        ChannelDestroy(radar_chid_);
-        ChannelDestroy(operator_chid_);
-        ChannelDestroy(dataDisplay_chid_);
     }
 }
 
@@ -346,7 +328,7 @@ void ComputerSystem::sendPlaneDataToConsole(const std::string& planeId){
 			//if Id at index equals ID desired by Operator
 			//send back to operator
 			PlaneState state = aircraftStatesCopy[i];
-			int con = ConnectAttach(ND_LOCAL_NODE, 0, operator_chid_, _NTO_SIDE_CHANNEL, 0);
+
 			bool status = MsgSend(con, &state, sizeof(state), nullptr, 0);
 			if (status == -1){
 			        LOG_ERROR("ComputerSystem", "Failed to send plane " + planeId + " data to console");
