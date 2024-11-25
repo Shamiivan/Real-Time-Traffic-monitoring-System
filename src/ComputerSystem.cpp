@@ -328,8 +328,7 @@ void ComputerSystem::sendPlaneDataToConsole(const std::string& planeId){
 			//if Id at index equals ID desired by Operator
 			//send back to operator
 			PlaneState state = aircraftStatesCopy[i];
-
-			bool status = MsgSend(con, &state, sizeof(state), nullptr, 0);
+			bool status = MsgSend(operator_chid_, &state, sizeof(state), nullptr, 0);
 			if (status == -1){
 			        LOG_ERROR("ComputerSystem", "Failed to send plane " + planeId + " data to console");
 				}

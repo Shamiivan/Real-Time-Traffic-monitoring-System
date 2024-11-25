@@ -60,11 +60,6 @@ struct OperatorCommand {
     double speedX, speedY, speedZ;
 };
 
-// Message from OperatorConsole to ComputerSystem
-struct OperatorCommandMsg {
-    OperatorCommand command;
-};
-
 struct DataDisplayRequestMsg {
     bool requestAugmentedData;
     // Additional fields if needed
