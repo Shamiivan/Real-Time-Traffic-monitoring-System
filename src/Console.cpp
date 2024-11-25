@@ -83,6 +83,7 @@ Status Console::processUserInput(){
 	return Status::OK;
 }
 
+
 Status Console::listPlanes() {
     OperatorCommandMsg msg;
     msg.type = ConsoleCommand::LIST_PLANES;

@@ -163,55 +163,61 @@ void ComputerSystem::radarLoop() {
 
 void ComputerSystem::operatorLoop() {
     while (running_) {
-        // Receive commands from OperatorConsole
         char msg_buffer[sizeof(OperatorCommandMsg)];
         int rcvid = MsgReceive(operator_chid_, &msg_buffer, sizeof(msg_buffer), NULL);
-        if (rcvid == -1) {
-            if (errno == EINTR) {
-                continue;
-            } else {
-                LOG_ERROR("ComputerSystem", "MsgReceive from OperatorConsole failed");
-                break;
-            }
-        }
-        if (rcvid == 0) {
-            // Pulse received
-            struct _pulse* pulse = (struct _pulse*)&msg_buffer;
-            if (pulse->code == PULSE_CODE_EXIT) {
-                break;
-            }
-        } else if (rcvid > 0) {
-            // Message received
-            OperatorCommandMsg* msg = (OperatorCommandMsg*)&msg_buffer;
-            // Process operator command
-            switch(msg->type) {
-                case ConsoleCommand::LIST_PLANES:
-//                    sendPlaneDataToConsole(opCmdMsg->planeId);
-                    LOG_WARNING("ComputerSystem", "Operator command to get plane data not implemented");
-                    break;
-                case ConsoleCommand::UPDATE_PLANE_VELOCITY:
-                    // Update plane velocity
-                    pthread_mutex_lock(&data_mutex_);
-                      for (auto& plane : aircraftStates_) {
-                          if (strcmp(plane.id,msg->planeId) == 0) {
-                              LOG_INFO("ComputerSystem", std::string("Found plane ") + msg->planeId);
-                              sendCourseCorrection(plane.id, msg->velocity, plane.coid_comp);
-                              break;
-                          }
-                      }
-                      pthread_mutex_unlock(&data_mutex_);
 
-                    LOG_INFO("ComputerSystem", std::string("Updated velocity for plane ") + msg->planeId);
-                    break;
-                case ConsoleCommand::UPDATE_PLANE_POSITION:
-                    // Update plane position
-                    LOG_WARNING("ComputerSystem", "Operator command to update plane position not implemented");
-                    break;
-                default:
-                    LOG_WARNING("ComputerSystem", "Unknown operator command");
-                    break;
+        if (rcvid == -1) {
+            if (errno == EINTR) continue;
+            LOG_ERROR("ComputerSystem", "MsgReceive from OperatorConsole failed");
+            break;
+        }
+
+        if (rcvid == 0) {
+            struct _pulse* pulse = (struct _pulse*)&msg_buffer;
+            if (pulse->code == PULSE_CODE_EXIT) break;
+            continue;
+        }
+
+        OperatorCommandMsg* msg = (OperatorCommandMsg*)&msg_buffer;
+        switch(msg->type) {
+            case ConsoleCommand::LIST_PLANES: {
+                pthread_mutex_lock(&data_mutex_);
+                PlaneListMsg response;
+                response.numPlanes = aircraftStates_.size();
+
+                for(size_t i = 0; i < response.numPlanes && i < 50; i++) {
+                    response.planes[i] = aircraftStates_[i];
+                }
+                pthread_mutex_unlock(&data_mutex_);
+
+                MsgReply(rcvid, EOK, &response, sizeof(PlaneListMsg));
+                break;
             }
-            MsgReply(rcvid, EOK, nullptr, 0);
+
+            case ConsoleCommand::UPDATE_PLANE_VELOCITY: {
+                pthread_mutex_lock(&data_mutex_);
+                for(auto& plane : aircraftStates_) {
+                    if(strcmp(plane.id, msg->planeId) == 0) {
+                        sendCourseCorrection(plane.id, msg->velocity, plane.coid_comp);
+                        LOG_INFO("ComputerSystem", std::string("Updated velocity for plane ") + msg->planeId);
+                        break;
+                    }
+                }
+                pthread_mutex_unlock(&data_mutex_);
+                MsgReply(rcvid, EOK, nullptr, 0);
+                break;
+            }
+
+            case ConsoleCommand::UPDATE_PLANE_POSITION:
+            case ConsoleCommand::DISPLAY_PLANE_DATA:
+                LOG_WARNING("ComputerSystem", "Command not implemented yet");
+                MsgReply(rcvid, EOK, nullptr, 0);
+                break;
+
+            default:
+                LOG_WARNING("ComputerSystem", "Unknown operator command");
+                MsgReply(rcvid, EOK, nullptr, 0);
+                break;
         }
     }
 }
