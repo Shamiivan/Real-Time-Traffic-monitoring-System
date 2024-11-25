@@ -18,12 +18,12 @@ class Console {
     void stop();
 
     ConsoleCommand getCommand();
-    void displayHep();
+    void displayHelp();
    private:
-     void *threadFunc(void *arg); //
+     static void *threadFunc(void *arg); //
      void run();
    private:
-     thread_t thread_;
+     pthread_t thread_;
      const int computerSystemCoid_;
      std::atomic<bool> running_;
 };

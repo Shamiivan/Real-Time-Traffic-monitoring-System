@@ -57,6 +57,7 @@ private:
 
     // Synchronization for IPC
     pthread_mutex_t mutex_;
+
 };
 
 #endif // PLANE_H

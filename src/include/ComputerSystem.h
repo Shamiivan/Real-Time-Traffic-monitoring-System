@@ -27,6 +27,8 @@ public:
     int getOperatorChannelId() const;
     int getDataDisplayChannelId() const;
 
+    void sendPlaneDataToConsole(const std::string& planeId);
+
 private:
     static void* threadFunc(void* arg);
     static void* radarThreadFunc(void* arg);

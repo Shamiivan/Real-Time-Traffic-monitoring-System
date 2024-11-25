@@ -40,12 +40,16 @@ void* Console::threadFunc(void* arg) {
 void Console::run() {
     while (running_) {
         ConsoleCommand command = getCommand();
-        if (command == ConsoleCommand::DISPLAY_PLANE_DATA){
+        if (command == ConsoleCommand::DIPLAY_PLANE_DATA){
           LOG_WARNING("Console", "Please  enter the plane id");
         }
     }
 }
-Console::dispayHelp() {
+
+ConsoleCommand Console::getCommand(){
+	return ConsoleCommand::DIPLAY_PLANE_DATA;
+};
+void Console::displayHelp() {
     LOG_INFO("Console", "Displaying help menu");
     std::stringstream helpMenu;
 

@@ -336,3 +336,22 @@ void ComputerSystem::sendCourseCorrection(const std::string& planeId, const Vect
 
 
 
+void ComputerSystem::sendPlaneDataToConsole(const std::string& planeId){
+	pthread_mutex_lock(&data_mutex_);
+	std::vector<PlaneState> aircraftStatesCopy = aircraftStates_;
+	pthread_mutex_unlock(&data_mutex_);
+
+	for(size_t i = 0; i < aircraftStatesCopy.size(); ++i){
+		if (aircraftStatesCopy[i].id == planeId){
+			//if Id at index equals ID desired by Operator
+			//send back to operator
+			PlaneState state = aircraftStatesCopy[i];
+			int con = ConnectAttach(ND_LOCAL_NODE, 0, operator_chid_, _NTO_SIDE_CHANNEL, 0);
+			bool status = MsgSend(con, &state, sizeof(state), nullptr, 0);
+			if (status == -1){
+			        LOG_ERROR("ComputerSystem", "Failed to send plane " + planeId + " data to console");
+				}
+			    LOG_WARNING("ComputerSystem", "Sent plane " + planeId + " data to console");
+		}
+	}
+}
