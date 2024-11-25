@@ -182,13 +182,34 @@ void ComputerSystem::operatorLoop() {
             }
         } else if (rcvid > 0) {
             // Message received
-            OperatorCommandMsg* opCmdMsg = (OperatorCommandMsg*)&msg_buffer;
+            OperatorCommandMsg* msg = (OperatorCommandMsg*)&msg_buffer;
             // Process operator command
-            if (opCmdMsg->command.type == OperatorCommand::SET_LOOKAHEAD_TIME) {
-                pthread_mutex_lock(&data_mutex_);
-                lookaheadTime_ = opCmdMsg->command.lookaheadTime;
-                pthread_mutex_unlock(&data_mutex_);
-                LOG_INFO("ComputerSystem", "Lookahead time set to " + std::to_string(lookaheadTime_) + " seconds");
+            switch(msg->type) {
+                case OperatorCommandMsg::GET_PLANE_DATA:
+//                    sendPlaneDataToConsole(opCmdMsg->planeId);
+                    LOG_WARNING("ComputerSystem", "Operator command to get plane data not implemented");
+                    break;
+                case OperatorCommandMsg::UPDATE_PLANE_VELOCITY:
+                    // Update plane velocity
+                    pthread_mutex_lock(&data_mutex_);
+                      for (auto& plane : aircraftStates_) {
+                          if (strcmp(plane.id,msg->planeId) == 0) {
+                              LOG_INFO("ComputerSystem", std::string("Found plane ") + msg->planeId);
+                              sendCourseCorrection(plane.id, msg->velocity, plane.coid_comp);
+                              break;
+                          }
+                      }
+                      pthread_mutex_unlock(&data_mutex_);
+
+                    LOG_INFO("ComputerSystem", std::string("Updated velocity for plane ") + msg->planeId);
+                    break;
+                case OperatorCommandMsg::UPDATE_PLANE_POSITION:
+                    // Update plane position
+                    LOG_WARNING("ComputerSystem", "Operator command to update plane position not implemented");
+                    break;
+                default:
+                    LOG_WARNING("ComputerSystem", "Unknown operator command");
+                    break;
             }
             MsgReply(rcvid, EOK, nullptr, 0);
         }
