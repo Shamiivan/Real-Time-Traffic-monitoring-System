@@ -11,17 +11,21 @@ enum class ConsoleCommand {
 class Console {
   public :
     Console();
+    Console(int computerSystemCoid);
     ~Console();
 
     void start();
     void stop();
 
     ConsoleCommand getCommand();
+    void displayHep();
    private:
      void *threadFunc(void *arg); //
      void run();
    private:
      thread_t thread_;
+     const int computerSystemCoid_;
+     std::atomic<bool> running_;
 };
 
 

@@ -51,7 +51,10 @@ public:
     void log(Level level, const std::string tag, const std::string& message) {
         if (isEnabled(level)) {
             std::lock_guard<std::mutex> lock(mutex);
-            std::cout << getTimestamp() << " [" << levelToString(level) << "] " << "[" << tag << "] "
+            std::string levelToLog = (level == Logger::Level::ERROR || level == Logger::Level::WARNING)? levelToString(level) : "";
+            std::cout << getTimestamp() << " ["
+               << levelToLog << "] " << "[" << tag << "] "
+                      << "] " << "[" << tag << "] "
                       << message << std::endl;
         }
     }
