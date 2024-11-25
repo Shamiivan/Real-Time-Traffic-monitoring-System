@@ -46,23 +46,16 @@ struct ComputerToDataDisplayMsg {
 };
 
 // Operator commands
-struct OperatorCommand {
-    enum CommandType {
-        SET_LOOKAHEAD_TIME,
-        SEND_TO_PLANE
-    } type;
-
-    // For SET_LOOKAHEAD_TIME
-    int lookaheadTime;
-
-    // For SEND_TO_PLANE
-    char aircraftId[16];
-    double speedX, speedY, speedZ;
-};
-
-// Message from OperatorConsole to ComputerSystem
 struct OperatorCommandMsg {
-    OperatorCommand command;
+    enum CommandType {
+    GET_PLANE_DATA, // Get data for a specific plane
+    UPDATE_PLANE_VELOCITY, // Update the velocity of a plane
+    UPDATE_PLANE_POSITION, // Update the position of a plane
+    } type;
+    // For SEND_TO_PLANE
+    char planeId[16];
+    Vector velocity;
+    Vector position;
 };
 
 struct DataDisplayRequestMsg {
