@@ -65,6 +65,7 @@ Status Console::processUserInput(){
         case '0':
         	return listPlanes();
         case '1':
+        	return displayPlaneData();
             break;
         case '2':
             return updatePlaneVelocity();
@@ -115,6 +116,29 @@ Status Console::listPlanes() {
     LOG_WARNING("Console", ss.str());
     return Status::OK;
 }
+
+Status Console::displayPlaneData(){
+	std::string planeId;
+	PlaneState state;
+
+	LOG_WARNING("Console", "Enter plane ID: ");
+	std::getline(std::cin, planeId);
+
+	OperatorCommandMsg msg;
+	msg.type = ConsoleCommand::DISPLAY_PLANE_DATA;
+	strncpy(msg.planeId, planeId.c_str(), sizeof(msg.planeId) - 1);
+	msg.planeId[sizeof(msg.planeId) - 1] = '\0';
+
+	int status = MsgSend(computerSystemCoid_, &msg, sizeof(msg), nullptr, 0);
+	if (status != EOK) {
+	        LOG_ERROR("Console", "Failed to send velocity update command");
+	        return Status::ERROR;
+	}
+
+	LOG_INFO("Console", "Request for plane data display sent");
+	    return Status::OK;
+}
+
 Status Console::updatePlaneVelocity() {
     std::string planeId;
     double x, y, z;

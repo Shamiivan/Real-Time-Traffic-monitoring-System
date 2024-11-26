@@ -15,10 +15,11 @@ class Console {
     Status processUserInput();
     Status updatePlaneVelocity();
     Status listPlanes();
+    Status displayPlaneData();
     void displayHelp();
 
    private:
-     static void *threadFunc(void *arg); //
+     static void *threadFunc(void *arg);
      void run();
    private:
      pthread_t thread_;

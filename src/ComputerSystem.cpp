@@ -210,7 +210,8 @@ void ComputerSystem::operatorLoop() {
 
             case ConsoleCommand::UPDATE_PLANE_POSITION:
             case ConsoleCommand::DISPLAY_PLANE_DATA:
-                LOG_WARNING("ComputerSystem", "Command not implemented yet");
+            	LOG_ERROR("COMP", "TESTS");
+            	sendPlaneDataToConsole(msg->planeId);
                 MsgReply(rcvid, EOK, nullptr, 0);
                 break;
 
@@ -348,21 +349,25 @@ void ComputerSystem::sendCourseCorrection(const std::string& planeId, const Vect
 
 
 
-void ComputerSystem::sendPlaneDataToConsole(const std::string& planeId){
+void ComputerSystem::sendPlaneDataToConsole(char planeId[16]){
 	pthread_mutex_lock(&data_mutex_);
-	std::vector<PlaneState> aircraftStatesCopy = aircraftStates_;
-	pthread_mutex_unlock(&data_mutex_);
+	std::cout<< "ERROR " << aircraftStates_.size() << "\n";
 
-	for(size_t i = 0; i < aircraftStatesCopy.size(); ++i){
-		if (aircraftStatesCopy[i].id == planeId){
-			//if Id at index equals ID desired by Operator
-			//send back to operator
-			PlaneState state = aircraftStatesCopy[i];
-			bool status = MsgSend(operator_chid_, &state, sizeof(state), nullptr, 0);
-			if (status == -1){
-			        LOG_ERROR("ComputerSystem", "Failed to send plane " + planeId + " data to console");
-				}
-			    LOG_WARNING("ComputerSystem", "Sent plane " + planeId + " data to console");
+	for(size_t i = 0; i < aircraftStates_.size(); ++i){
+		std::cout<< "ERROR " << aircraftStates_[i].id << "\n";
+		if (aircraftStates_[i].id == planeId){
+			PlaneState state = aircraftStates_[i];
+			std::stringstream ss;
+			ss << state.id << " | ("
+			           << state.position.x << ","
+			           << state.position.y << ","
+			           << state.position.z << ") | ("
+			           << state.velocity.x << ","
+			           << state.velocity.y << ","
+			           << state.velocity.z << ")\n";
+			LOG_WARNING("Computer System ", ss.str());
 		}
 	}
+
+	pthread_mutex_unlock(&data_mutex_);
 }

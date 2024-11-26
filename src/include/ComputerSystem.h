@@ -27,7 +27,7 @@ public:
     int getOperatorChannelId() const;
     int getDataDisplayChannelId() const;
 
-    void sendPlaneDataToConsole(const std::string& planeId);
+    void sendPlaneDataToConsole(char planeId[16]);
 
 private:
     static void* threadFunc(void* arg);
