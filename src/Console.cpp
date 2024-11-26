@@ -180,7 +180,6 @@ void Console::displayHelp() {
     helpMenu << "0. List Planes\n";
     helpMenu << "1. Display Plane Data\n";
     helpMenu << "2. Update Plane Velocity\n";
-    helpMenu << "3. Update Plane Position\n";
-    helpMenu << "4. Exit\n";
+    helpMenu << "3. Exit\n";
     LOG_WARNING("Console", helpMenu.str());
 }
