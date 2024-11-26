@@ -67,7 +67,7 @@ void ComputerSystem::start() {
         LOG_ERROR("ComputerSystem", "Failed to create operator thread");
         exit(EXIT_FAILURE);
     }
-    logAirspaceLogTimer->start();
+    airspaceLogTimer->start();
     LOG_INFO("ComputerSystem", "Operator thread started");
 
 
@@ -90,7 +90,7 @@ void ComputerSystem::stop() {
         int policy;
         pthread_getschedparam(pthread_self(), &policy, &param);
         int priority = param.sched_priority;
-    	logAirspaceLogTimer->stop();
+    	airspaceLogTimer->stop();
 
         //destroy channels
         ChannelDestroy(radar_chid_);
