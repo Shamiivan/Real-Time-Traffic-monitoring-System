@@ -42,7 +42,7 @@ void* DataDisplay::threadFunc(void* arg) {
 void DataDisplay::run() {
     while (running_) {
         requestDataFromComputerSystem();
-//        updateDisplay();
+        updateDisplay();
         sleep(5); // Update every 5 seconds
     }
 }
