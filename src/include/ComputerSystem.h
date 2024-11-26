@@ -65,6 +65,7 @@ private:
 
     // Synchronization
     pthread_mutex_t data_mutex_;
+
 };
 
 #endif // COMPUTERSYSTEM_H
