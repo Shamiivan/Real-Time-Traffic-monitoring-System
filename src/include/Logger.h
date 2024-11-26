@@ -7,6 +7,28 @@
 #include <mutex>
 #include <bitset>
 #include <sstream>
+#include <fstream>
+#include <time.h>
+#include <Config.h>
+
+
+
+// Convenience macros - now with enabled checks
+#define LOG_DEBUG(tag, msg)   \
+  if(Logger::getInstance().isEnabled(Logger::Level::DEBUG)) \
+    Logger::getInstance().log(Logger::Level::DEBUG, tag, msg)
+#define LOG_INFO(tag, msg) \
+    if(Logger::getInstance().isEnabled(Logger::Level::INFO)) \
+        Logger::getInstance().log(Logger::Level::INFO, tag, msg)
+#define LOG_WARNING(tag, msg) \
+    if(Logger::getInstance().isEnabled(Logger::Level::WARNING)) \
+        Logger::getInstance().log(Logger::Level::WARNING, tag, msg)
+#define LOG_ERROR(tag, msg) \
+    if(Logger::getInstance().isEnabled(Logger::Level::ERROR)) \
+        Logger::getInstance().log(Logger::Level::ERROR, tag, msg)
+
+#define LOG_TO_FILE(tag, msg) \
+  Logger::getInstance().logToFile(tag, msg)\
 
 class Logger {
 public:
@@ -51,7 +73,8 @@ public:
     void log(Level level, const std::string tag, const std::string& message) {
         if (isEnabled(level)) {
             std::lock_guard<std::mutex> lock(mutex);
-            std::cout << getTimestamp() << " [" << levelToString(level) << "] [" << tag << "] " << message << std::endl;
+            std::string str = (level == Logger::Level::ERROR) ? "[ " + levelToString(level) + " ]": "";
+            std::cout << getTimestamp() << str << "[ " << tag << "] " << message << std::endl;
         }
     }
 
@@ -77,6 +100,20 @@ public:
 
         return ss.str();
     }
+    Status logToFile(const std::string tag, const std::string& message) {
+      std::lock_guard<std::mutex> lock(mutex);
+      std::ofstream file("log.txt", std::ios::app);
+      LOG_INFO("Logger", "Writing to log file");
+      if (!file.is_open()) {
+        LOG_ERROR("Logger", "Failed to open log file");
+        return Status::ERROR;
+      }
+
+      file << getTimestamp() << "[" << tag << "] " << message << std::endl;
+      file.flush();
+      file.close();
+      return Status::OK;
+    }
 
 private:
     Logger() {
@@ -91,7 +128,18 @@ private:
     std::bitset<static_cast<size_t>(Level::COUNT)> enabledLevels;
     std::mutex mutex;
 
-    const char* levelToString(Level level) {
+
+//    const char* levelToString(Level level) {
+//        switch (level) {
+//            case Level::DEBUG:   return "DEBUG";
+//            case Level::INFO:    return "INFO";
+//            case Level::WARNING: return "WARNING";
+//            case Level::ERROR:   return "ERROR";
+//            default:            return "UNKNOWN";
+//        }
+//    }
+
+    std::string levelToString(Level level) {
         switch (level) {
             case Level::DEBUG:   return "DEBUG";
             case Level::INFO:    return "INFO";
@@ -100,21 +148,9 @@ private:
             default:            return "UNKNOWN";
         }
     }
+
 };
 
-// Convenience macros - now with enabled checks
-#define LOG_DEBUG(tag, msg)   \
-  if(Logger::getInstance().isEnabled(Logger::Level::DEBUG)) \
-    Logger::getInstance().log(Logger::Level::DEBUG, tag, msg)
-#define LOG_INFO(tag, msg) \
-    if(Logger::getInstance().isEnabled(Logger::Level::INFO)) \
-        Logger::getInstance().log(Logger::Level::INFO, tag, msg)
-#define LOG_WARNING(tag, msg) \
-    if(Logger::getInstance().isEnabled(Logger::Level::WARNING)) \
-        Logger::getInstance().log(Logger::Level::WARNING, tag, msg)
-#define LOG_ERROR(tag, msg) \
-    if(Logger::getInstance().isEnabled(Logger::Level::ERROR)) \
-        Logger::getInstance().log(Logger::Level::ERROR, tag, msg)
 
 
 

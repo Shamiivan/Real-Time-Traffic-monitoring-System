@@ -9,6 +9,7 @@
 #include "messages.h"
 #include "vector.h"
 #include <sys/neutrino.h>
+#include <timer.h>
 
 
 // Define pulse codes
@@ -27,7 +28,8 @@ public:
     int getOperatorChannelId() const;
     int getDataDisplayChannelId() const;
 
-    void sendPlaneDataToConsole(char planeId[16]);
+    void sendPlaneDataToConsole(const std::string& planeId);
+    void logAirspaceState();
 
 private:
     static void* threadFunc(void* arg);
@@ -65,6 +67,9 @@ private:
 
     // Synchronization
     pthread_mutex_t data_mutex_;
+
+    // logging
+    std::unique_ptr<Timer> airspaceLogTimer;
 
 };
 

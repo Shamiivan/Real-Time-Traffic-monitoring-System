@@ -61,10 +61,10 @@ int main() {
     radar.start();
 
     // Create DataDisplay and connect to ComputerSystem
-        DataDisplay dataDisplay(computerSystemDataDisplayCoid);
-        dataDisplay.start();
+    DataDisplay dataDisplay(computerSystemDataDisplayCoid);
+    dataDisplay.start();
 
-        while(true){};
+    while(true){};
 
 //    // Stop all systems
 //    radar.stop();

@@ -32,6 +32,11 @@ ComputerSystem::ComputerSystem() : running_(false), lookaheadTime_(3) { // Defau
       LOG_ERROR("ComputerSystem", "Failed to create DataDisplay channel");
         exit(EXIT_FAILURE);
     }
+
+    const int LOGGING_INTERVAL = 2;
+    airspaceLogTimer = std::make_unique<Timer>(LOGGING_INTERVAL, [this](){
+    	logAirspaceState();
+    });
 }
 
 ComputerSystem::~ComputerSystem() {
@@ -62,6 +67,7 @@ void ComputerSystem::start() {
         LOG_ERROR("ComputerSystem", "Failed to create operator thread");
         exit(EXIT_FAILURE);
     }
+    airspaceLogTimer->start();
     LOG_INFO("ComputerSystem", "Operator thread started");
 
 
@@ -84,6 +90,7 @@ void ComputerSystem::stop() {
         int policy;
         pthread_getschedparam(pthread_self(), &policy, &param);
         int priority = param.sched_priority;
+    	airspaceLogTimer->stop();
 
         //destroy channels
         ChannelDestroy(radar_chid_);
@@ -368,4 +375,30 @@ void ComputerSystem::sendPlaneDataToConsole(char planeId[16]){
 	}
 
 	pthread_mutex_unlock(&data_mutex_);
+}
+
+
+void ComputerSystem::logAirspaceState() {
+    pthread_mutex_lock(&data_mutex_);
+    std::stringstream ss;
+
+    ss << "\n=== Airspace State ===";
+    ss << "\nTimestamp: " << Logger::getInstance().getTimestamp();
+    ss << "\nAircraft Count: " << aircraftStates_.size();
+
+    for (const auto& aircraft : aircraftStates_) {
+        ss << "\n\nAircraft ID: " << aircraft.id;
+        ss << "\nPosition: (" << std::fixed << std::setprecision(2)
+           << aircraft.position.x << ", "
+           << aircraft.position.y << ", "
+           << aircraft.position.z << ")";
+        ss << "\nVelocity: ("
+           << aircraft.velocity.x << ", "
+           << aircraft.velocity.y << ", "
+           << aircraft.velocity.z << ")";
+    }
+    ss << "\n===================\n";
+
+    pthread_mutex_unlock(&data_mutex_);
+    LOG_TO_FILE("LOG", ss.str());
 }
