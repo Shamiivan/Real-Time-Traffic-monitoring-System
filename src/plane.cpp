@@ -158,11 +158,11 @@ void Plane::messageLoop() {
 
         if (rcvid == -1) {
             if (errno == EINTR) {
-                 LOG_ERROR("Plane", "MsgReceive failed" + std::to_string(errno));
+//                 LOG_ERROR("Plane", "MsgReceive failed" + std::to_string(errno));
                 continue;
             } else {
-                 LOG_ERROR("Plane", "MsgReceive failed" + std::to_string(errno));
-                break;
+//                 LOG_ERROR("Plane", "MsgReceive failed" + std::to_string(errno));
+                 continue;
             }
         } else if (rcvid > 0) {
             PlaneResponseMsg responseMsg;
