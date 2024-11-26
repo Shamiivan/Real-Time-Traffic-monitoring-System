@@ -210,7 +210,6 @@ void ComputerSystem::operatorLoop() {
 
             case ConsoleCommand::UPDATE_PLANE_POSITION:
             case ConsoleCommand::DISPLAY_PLANE_DATA:
-            	LOG_ERROR("COMP", "TESTS");
             	sendPlaneDataToConsole(msg->planeId);
                 MsgReply(rcvid, EOK, nullptr, 0);
                 break;
@@ -351,7 +350,6 @@ void ComputerSystem::sendCourseCorrection(const std::string& planeId, const Vect
 
 void ComputerSystem::sendPlaneDataToConsole(char planeId[16]){
 	pthread_mutex_lock(&data_mutex_);
-	std::cout<< "ERROR " << aircraftStates_.size() << "\n";
 
 	for(size_t i = 0; i < aircraftStates_.size(); ++i){
 		//if the two IDs are equal, print the data in a LOG_WARNING
