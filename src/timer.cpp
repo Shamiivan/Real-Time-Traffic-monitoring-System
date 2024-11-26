@@ -82,7 +82,6 @@ void Timer::run() {
     while (running) {
         rcvid = MsgReceive(chid, &pulse, sizeof(pulse), NULL);
         if (rcvid == 0 && pulse.code == _PULSE_CODE_MINAVAIL) {
-          printf("Timer pulse received\n");
           callback();
         }
     }

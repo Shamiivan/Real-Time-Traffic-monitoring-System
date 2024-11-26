@@ -65,17 +65,16 @@ int main() {
     dataDisplay.start();
 
     while(true){};
-
-//    // Stop all systems
-//    radar.stop();
-//    dataDisplay.stop();
-//    computerSystem.stop();
-
-
-    // Detach connections
     ConnectDetach(computerSystemRadarCoid);
     ConnectDetach(computerSystemDataDisplayCoid);
-    LOG_INFO("Main", "PROGRAM DONE");
+    ConnectDetach(computerSystemOperatorCoid);
+
+//    // Stop all systems
+    radar.stop();
+    dataDisplay.stop();
+    computerSystem.stop();
+
+    LOG_INFO("Main", "PROGRAM DONE!");
 
     return 0;
 }

@@ -33,7 +33,7 @@ ComputerSystem::ComputerSystem() : running_(false), lookaheadTime_(3) { // Defau
         exit(EXIT_FAILURE);
     }
 
-    const int LOGGING_INTERVAL = 2;
+    const int LOGGING_INTERVAL = 30;
     airspaceLogTimer = std::make_unique<Timer>(LOGGING_INTERVAL, [this](){
     	logAirspaceState();
     });
