@@ -177,6 +177,7 @@ void Console::displayHelp() {
     std::stringstream helpMenu;
 
     helpMenu << "Console Commands:\n";
+    helpMenu << "0. List Planes\n";
     helpMenu << "1. Display Plane Data\n";
     helpMenu << "2. Update Plane Velocity\n";
     helpMenu << "3. Update Plane Position\n";
