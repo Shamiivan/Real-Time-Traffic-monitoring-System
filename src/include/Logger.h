@@ -7,7 +7,28 @@
 #include <mutex>
 #include <bitset>
 #include <sstream>
+#include <fstream>
 #include <time.h>
+#include <Config.h>
+
+
+
+// Convenience macros - now with enabled checks
+#define LOG_DEBUG(tag, msg)   \
+  if(Logger::getInstance().isEnabled(Logger::Level::DEBUG)) \
+    Logger::getInstance().log(Logger::Level::DEBUG, tag, msg)
+#define LOG_INFO(tag, msg) \
+    if(Logger::getInstance().isEnabled(Logger::Level::INFO)) \
+        Logger::getInstance().log(Logger::Level::INFO, tag, msg)
+#define LOG_WARNING(tag, msg) \
+    if(Logger::getInstance().isEnabled(Logger::Level::WARNING)) \
+        Logger::getInstance().log(Logger::Level::WARNING, tag, msg)
+#define LOG_ERROR(tag, msg) \
+    if(Logger::getInstance().isEnabled(Logger::Level::ERROR)) \
+        Logger::getInstance().log(Logger::Level::ERROR, tag, msg)
+
+#define LOG_TO_FILE(tag, msg) \
+  Logger::getInstance().logToFile(tag, msg)\
 
 class Logger {
 public:
@@ -79,6 +100,19 @@ public:
 
         return ss.str();
     }
+    Status logToFile(const std::string tag, const std::string& message) {
+      std::lock_guard<std::mutex> lock(mutex);
+      std::ofstream file("log.txt", std::ios::app);
+      if (!file.is_open()) {
+        LOG_ERROR("Logger", "Failed to open log file");
+        return Status::ERROR;
+      }
+
+      file << getTimestamp() << "[" << tag << "] " << message << std::endl;
+      file.flush();
+      file.close();
+      return Status::OK;
+    }
 
 private:
     Logger() {
@@ -103,16 +137,7 @@ private:
 //            default:            return "UNKNOWN";
 //        }
 //    }
-    Status logToFile(const std::string tag, const std::string& message) {
-      std::lock_guard<std::mutex> lock(mutex);
-      std::ofstream file("log.txt", std::ios::app);
-      if (!file.is_open()) {
-        LOG_ERROR("Logger", "Failed to open log file");
-        return Status::ERROR;
-      }
 
-      file << getTimestamp() << "[" << tag << "] " << message << std::endl;
-    }
     std::string levelToString(Level level) {
         switch (level) {
             case Level::DEBUG:   return "DEBUG";
@@ -125,22 +150,6 @@ private:
 
 };
 
-// Convenience macros - now with enabled checks
-#define LOG_DEBUG(tag, msg)   \
-  if(Logger::getInstance().isEnabled(Logger::Level::DEBUG)) \
-    Logger::getInstance().log(Logger::Level::DEBUG, tag, msg)
-#define LOG_INFO(tag, msg) \
-    if(Logger::getInstance().isEnabled(Logger::Level::INFO)) \
-        Logger::getInstance().log(Logger::Level::INFO, tag, msg)
-#define LOG_WARNING(tag, msg) \
-    if(Logger::getInstance().isEnabled(Logger::Level::WARNING)) \
-        Logger::getInstance().log(Logger::Level::WARNING, tag, msg)
-#define LOG_ERROR(tag, msg) \
-    if(Logger::getInstance().isEnabled(Logger::Level::ERROR)) \
-        Logger::getInstance().log(Logger::Level::ERROR, tag, msg)
-
-#define LOG_TO_FILE(level, tag, msg) \
-  Logger::getInstance().logToFile(tag, msg)
 
 
 

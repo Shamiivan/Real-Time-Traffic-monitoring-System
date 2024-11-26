@@ -32,6 +32,11 @@ ComputerSystem::ComputerSystem() : running_(false), lookaheadTime_(3) { // Defau
       LOG_ERROR("ComputerSystem", "Failed to create DataDisplay channel");
         exit(EXIT_FAILURE);
     }
+
+    const int LOGGING_INTERVAL = 2;
+    airspaceLogTimer = std::make_unique<Timer>(LOGGING_INTERVAL, [this](){
+    	logAirspaceState();
+    });
 }
 
 ComputerSystem::~ComputerSystem() {
@@ -390,6 +395,5 @@ void ComputerSystem::logAirspaceState() {
     ss << "\n===================\n";
 
     pthread_mutex_unlock(&data_mutex_);
-
-    LOG_TO_FILE(Logger::Level::INFO, "AirspaceHistory", ss.str(), AIRSPACE_LOG_FILE);
+    LOG_TO_FILE("LOG", ss.str());
 }

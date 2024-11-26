@@ -9,7 +9,7 @@
 #include "messages.h"
 #include "vector.h"
 #include <sys/neutrino.h>
-#include <Timer.h>
+#include <timer.h>
 
 
 // Define pulse codes
@@ -69,8 +69,7 @@ private:
     pthread_mutex_t data_mutex_;
 
     // logging
-    static constexpr const char* AIRSPACE_LOG_FILE = "airspace_history.log";
-    std::unique_ptr<Timer> airspaceLogTimer_;
+    std::unique_ptr<Timer> airspaceLogTimer;
 
 };
 
