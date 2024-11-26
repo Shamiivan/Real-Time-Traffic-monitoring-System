@@ -354,8 +354,8 @@ void ComputerSystem::sendPlaneDataToConsole(char planeId[16]){
 	std::cout<< "ERROR " << aircraftStates_.size() << "\n";
 
 	for(size_t i = 0; i < aircraftStates_.size(); ++i){
-		std::cout<< "ERROR " << aircraftStates_[i].id << "\n";
-		if (aircraftStates_[i].id == planeId){
+		//if the two IDs are equal, print the data in a LOG_WARNING
+		if (std::strcmp(aircraftStates_[i].id, planeId) == 0){
 			PlaneState state = aircraftStates_[i];
 			std::stringstream ss;
 			ss << state.id << " | ("
