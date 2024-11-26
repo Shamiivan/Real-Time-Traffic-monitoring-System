@@ -103,6 +103,7 @@ public:
     Status logToFile(const std::string tag, const std::string& message) {
       std::lock_guard<std::mutex> lock(mutex);
       std::ofstream file("log.txt", std::ios::app);
+      LOG_INFO("Logger", "Writing to log file");
       if (!file.is_open()) {
         LOG_ERROR("Logger", "Failed to open log file");
         return Status::ERROR;
