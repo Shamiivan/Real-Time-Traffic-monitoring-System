@@ -366,3 +366,30 @@ void ComputerSystem::sendPlaneDataToConsole(const std::string& planeId){
 		}
 	}
 }
+
+
+void ComputerSystem::logAirspaceState() {
+    pthread_mutex_lock(&data_mutex_);
+    std::stringstream ss;
+
+    ss << "\n=== Airspace State ===";
+    ss << "\nTimestamp: " << Logger::getInstance().getTimestamp();
+    ss << "\nAircraft Count: " << aircraftStates_.size();
+
+    for (const auto& aircraft : aircraftStates_) {
+        ss << "\n\nAircraft ID: " << aircraft.id;
+        ss << "\nPosition: (" << std::fixed << std::setprecision(2)
+           << aircraft.position.x << ", "
+           << aircraft.position.y << ", "
+           << aircraft.position.z << ")";
+        ss << "\nVelocity: ("
+           << aircraft.velocity.x << ", "
+           << aircraft.velocity.y << ", "
+           << aircraft.velocity.z << ")";
+    }
+    ss << "\n===================\n";
+
+    pthread_mutex_unlock(&data_mutex_);
+
+    LOG_TO_FILE(Logger::Level::INFO, "AirspaceHistory", ss.str(), AIRSPACE_LOG_FILE);
+}
