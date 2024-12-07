@@ -1,53 +1,61 @@
+// radar.h
 #ifndef RADAR_H
 #define RADAR_H
 
-#include <memory>
 #include <vector>
-#include <map>
-#include <mutex>
-#include <sys/netmgr.h>
-#include <sys/neutrino.h>
 #include <string>
+#include <mutex>
+#include <pthread.h>
 #include "plane.h"
-#include "timer.h"
+#include "messages.h"
 
-using std::string;
-using std::pair;
-using std::map;
-using std::shared_ptr;
-using std::vector;
-using std::mutex;
-using std::unique_ptr;
-using std::lock_guard;
-using std::atomic;
-using std::move;
-using std::to_string;
-using std::make_unique;
-using std::find_if;
+struct PlaneConnection {
+   Plane* plane;
+   int coid; // Connection ID to the Plane's channel
+   int coid_comp; //connection ID for computer to plane's computer channel
+};
+
+struct Bounds {
+        static constexpr double MIN_X = 0.0;
+        static constexpr double MAX_X = 100000.0;
+        static constexpr double MIN_Y = 0.0;
+        static constexpr double MAX_Y = 100000.0;
+        static constexpr double MIN_Z = 0.0;
+        static constexpr double MAX_Z = 25000.0;
+
+        bool contains(const Vector& position) const {
+            return position.x >= MIN_X && position.x <= MAX_X &&
+                   position.y >= MIN_Y && position.y <= MAX_Y &&
+                   position.z >= MIN_Z && position.z <= MAX_Z;
+        }
+    };
 
 class Radar {
-  public:
-    Radar();
+public:
+    Radar(int computerSystemCoid);
     ~Radar();
-
-    // plane management
-    int add_plane(string id, Vector position, Vector speed);
 
     void start();
     void stop();
-  private:
-    int interval;
-    vector<unique_ptr<Plane>> planes; // planes in the radar
 
-    // thread management
-    atomic<bool> running;
-    int thread_id;
-    static void* polling_worker(void* arg);
-    mutable mutex mtx;
+    int add_plane(std::string id, Vector position, Vector speed);
+    int getPlaneCount() { return planes_.size(); }
+
+private:
+    static void* threadFunc(void* arg);
     void run();
     void update_planes();
-
-    unique_ptr<Timer> timer;
-    const int POLLING_INTERVAL= 1;
+    int remove_plane(std::string id);
+    bool query_plane(const PlaneConnection& conn, PlaneResponseMsg& responseMsg);
+private :
+    std::vector<Plane*> planes_;
+    std::vector<PlaneConnection> planeConnections_;
+    pthread_t thread_;
+    bool running_;
+    std::mutex mtx;
+    std::mutex planeMtx;
+    int computerSystemCoid_;
+    const Bounds radarBounds{};  // Using default initialization with constants
 };
-#endif //RADAR_H
+
+#endif // RADAR_H
